@@ -1,0 +1,100 @@
+{
+  "projectType": "saas",
+  "projectName": "Bad UI",
+  "projectDescription": "A research-backed catalog of UI antipatterns and accessibility failures, with WCAG/Nielsen references, business impact data, and production-ready code fixes.",
+  "theme": "willow",
+  "primaryColor": "#7c7c7c",
+  "lightColor": "#070707",
+  "darkColor": "#c4c4c4",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": ["introduction", "quickstart"]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/antipattern-library",
+              "features/categories",
+              "features/improvement-guides",
+              "features/tools-and-resources"
+            ]
+          },
+          {
+            "group": "Antipattern Categories",
+            "pages": [
+              "categories/overview",
+              "categories/forms",
+              "categories/navigation",
+              "categories/accessibility",
+              "categories/mobile",
+              "categories/feedback",
+              "categories/layout",
+              "categories/typography",
+              "categories/dark-patterns",
+              "categories/loading",
+              "categories/control-theatre",
+              "categories/notifications",
+              "categories/micro-ux"
+            ]
+          },
+          {
+            "group": "User Accounts",
+            "pages": [
+              "accounts/registration",
+              "accounts/login",
+              "accounts/profile"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Contributing",
+        "groups": [
+          {
+            "group": "Contribute",
+            "pages": [
+              "contributing/overview",
+              "contributing/submit-antipattern",
+              "contributing/data-schema"
+            ]
+          },
+          {
+            "group": "Development",
+            "pages": [
+              "development/setup",
+              "development/database",
+              "development/deployment"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "120+ documented UI antipatterns across 12 structured categories",
+    "WCAG 2.1/2.2 accessibility violation references per pattern",
+    "Nielsen's 10 usability heuristics mapped to each antipattern",
+    "Business impact quantification with real conversion data",
+    "Production-ready React/Tailwind CSS code fixes",
+    "Searchable and filterable antipattern library",
+    "Impact severity levels: Critical, High, Medium, Low",
+    "User accounts with profiles via Supabase Auth",
+    "Supabase PostgreSQL backend with row-level security"
+  ],
+  "publicApiSurface": [
+    "GET /antipatterns - Browse the full antipattern catalog",
+    "GET /antipatterns/[slug] - View a single antipattern case study",
+    "GET /library - Filtered/searchable archive view",
+    "GET /categories - Browse antipatterns by category",
+    "DbAntipattern interface: id, slug, title, excerpt, category, impact, cover_url, wcag_refs, nielsen_refs, code_fix, stat_line, why, bad_description, good_description, business_impact, pro_tip, user_story",
+    "AntipatternItem interface: title, category, impact, excerpt, slug, tilt",
+    "Category interface: title, description, icon, slug, tilt",
+    "upsert_antipattern() SQL function for seeding/updating antipatterns",
+    "Supabase RLS policies: antipatterns are publicly readable, profiles are owner-managed"
+  ]
+}
