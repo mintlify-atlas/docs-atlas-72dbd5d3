@@ -1,0 +1,198 @@
+---
+title: "Login"
+description: "How to sign in to your badui.dev account, how sessions are managed, and what the middleware protects."
+keywords: ["login", "sign in", "authentication", "session", "supabase", "middleware"]
+---
+
+## Signing in
+
+badui.dev uses email and password authentication via Supabase Auth. There is currently one authentication method: **email + password**.
+
+Navigate to [badui.dev/login](https://badui.dev/login) or click **Sign in** in the top-right corner of any page.
+
+<Steps>
+  <Step title="Enter your email">
+    Type the email address you registered with into the **Email** field.
+  </Step>
+  <Step title="Enter your password">
+    Type your password into the **Password** field.
+  </Step>
+  <Step title="Click Sign in">
+    The form submits via a Next.js Server Action to `supabase.auth.signInWithPassword`.
+  </Step>
+  <Step title="Redirect to homepage">
+    On success, Next.js calls `revalidatePath("/", "layout")` to refresh cached data across the entire layout, then redirects you to `/`. The navbar updates immediately to show your avatar and email.
+  </Step>
+</Steps>
+
+<Warning>
+  If your email address has not been confirmed, Supabase will reject the sign-in attempt. Check your inbox for the original confirmation email and click the link before trying again.
+</Warning>
+
+## Authentication method
+
+### Email and password
+
+The `login` Server Action in `lib/supabase/actions.ts` calls `signInWithPassword` with the submitted form data:
+
+```typescript lib/supabase/actions.ts
+export async function login(formData: FormData) {
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({
+    email:    formData.get("email") as string,
+    password: formData.get("password") as string,
+  });
+  if (error) redirect(`/login?error=${encodeURIComponent(error.message)}`);
+  revalidatePath("/", "layout");
+  redirect("/");
+}
+```
+
+If authentication fails, the action redirects back to `/login?error=…` and the decoded error message appears in an alert banner.
+
+## The auth callback route
+
+The `/auth/callback` route at `app/auth/callback/route.ts` is the redirect target for Supabase's email-based flows (registration confirmation, magic links if enabled).
+
+```typescript app/auth/callback/route.ts
+export async function GET(request: Request) {
+  const { searchParams, origin } = new URL(request.url);
+  const code = searchParams.get("code");
+  const next = searchParams.get("next") ?? "/";
+
+  if (code) {
+    const supabase = await createClient();
+    await supabase.auth.exchangeCodeForSession(code);
+  }
+
+  return NextResponse.redirect(`${origin}${next}`);
+}
+```
+
+When Supabase appends `?code=…` to the callback URL, the handler calls `exchangeCodeForSession` to convert the one-time code into a full session stored in cookies. It then redirects to `next` (defaulting to `/`).
+
+<Note>
+  The `next` query parameter can be used to redirect a user back to the page they were trying to reach before login. For example, `/auth/callback?code=abc&next=/profile`.
+</Note>
+
+## Session handling
+
+Sessions are managed server-side using `@supabase/ssr`. The server client in `lib/supabase/server.ts` reads and writes session cookies through Next.js's `cookies()` API:
+
+```typescript lib/supabase/server.ts
+export async function createClient() {
+  const cookieStore = await cookies();
+
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll()  { return cookieStore.getAll(); },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {
+            // Called from a Server Component — cookie mutations handled by middleware
+          }
+        },
+      },
+    }
+  );
+}
+```
+
+For client-side components (such as the `NavbarAuth` dropdown), the browser client in `lib/supabase/client.ts` uses `@supabase/ssr`'s `createBrowserClient` and subscribes to `onAuthStateChange` to keep the UI in sync without a full page reload.
+
+## Middleware
+
+Next.js middleware in `middleware.ts` runs on every request that is not a static asset or image:
+
+```typescript middleware.ts
+export async function middleware(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({ request });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  // Refresh session — required on every request
+  await supabase.auth.getUser();
+
+  return supabaseResponse;
+}
+
+export const config = {
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
+};
+```
+
+The middleware's primary job is to call `supabase.auth.getUser()` on every matched request. This refreshes the session token if it is about to expire and propagates any updated cookies back to the browser in the response.
+
+<Note>
+  The middleware does **not** block unauthenticated users from accessing any route. Route-level protection is enforced inside individual pages — for example, `/profile/page.tsx` checks for a session and calls `redirect("/login")` if none exists.
+</Note>
+
+The matcher excludes:
+- `_next/static` — compiled JS/CSS bundles
+- `_next/image` — Next.js image optimization responses
+- `favicon.ico`
+- All static image formats: `.svg`, `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`
+
+## Signing out
+
+The `logout` Server Action signs the user out and redirects to the homepage:
+
+```typescript lib/supabase/actions.ts
+export async function logout() {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  revalidatePath("/", "layout");
+  redirect("/");
+}
+```
+
+You can sign out from the **Sign out** button in the navbar dropdown menu or from the **Sign out** button at the bottom of the sidebar on the [profile page](/accounts/profile).
+
+## Error handling
+
+If `signInWithPassword` returns an error, the action redirects to `/login?error=…`. The page reads the `error` search parameter and renders it in an alert banner above the form.
+
+Common errors:
+
+| Error | Cause |
+|---|---|
+| `Invalid login credentials` | Wrong email or password. |
+| `Email not confirmed` | The registration confirmation email has not been clicked yet. |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Create an account" icon="user-plus" href="/accounts/registration">
+    Register for a free badui.dev account
+  </Card>
+  <Card title="Edit your profile" icon="user-pen" href="/accounts/profile">
+    Set your username, bio, and website
+  </Card>
+</CardGroup>

@@ -1,0 +1,283 @@
+---
+title: "Database setup"
+description: "Create the Supabase project, run migrations, and understand the antipatterns and profiles schema."
+---
+
+## Supabase project setup
+
+<Steps>
+  <Step title="Create a Supabase project">
+    Go to [supabase.com](https://supabase.com) and create a new project. Choose a region close to your users.
+
+    Once the project is provisioned, navigate to **Settings → API** and copy:
+    - **Project URL** — this is your `NEXT_PUBLIC_SUPABASE_URL`
+    - **anon / public key** — this is your `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+    Add both to your `.env.local` file as described in the [setup guide](/development/setup).
+  </Step>
+
+  <Step title="Open the SQL editor">
+    In the Supabase dashboard, go to **SQL Editor**. You will run each migration file in order using this editor. Alternatively, use the Supabase CLI:
+
+    ```bash
+    supabase db push
+    ```
+
+    <Tip>
+    If you use the CLI, place the migration files under `supabase/migrations/` with the filenames shown below. The CLI applies them in lexicographic order.
+    </Tip>
+  </Step>
+
+  <Step title="Run migration 002 — base antipatterns table">
+    Execute `supabase/migrations/002_antipatterns_schema.sql`. This creates the `public.antipatterns` table and enables RLS.
+
+    ```sql 002_antipatterns_schema.sql
+    create table if not exists public.antipatterns (
+      id            bigserial primary key,
+      slug          text unique not null,
+      title         text not null,
+      excerpt       text not null,
+      category      text not null,
+      impact        text not null check (impact in ('Critical','High','Medium','Low')),
+      cover_url     text,
+      wcag_refs     text[]  default '{}',
+      code_fix      text,
+      published     boolean default true,
+      created_at    timestamptz default now(),
+      updated_at    timestamptz default now()
+    );
+    ```
+  </Step>
+
+  <Step title="Run migration 003 — expanded detail columns and seed function">
+    Execute `supabase/migrations/003_expand_antipatterns_details.sql`. This adds eight additional columns and creates the `upsert_antipattern()` function used for seeding.
+
+    After the function is created, the file immediately seeds five example antipatterns. These are the patterns that appear on the homepage in the Hall of Shame and Recent Antipatterns sections.
+  </Step>
+
+  <Step title="Run migration 004 — user profiles table">
+    Execute `supabase/migrations/004_user_profiles.sql`. This adds the `profiles` table (if not yet created by Supabase Auth), applies RLS, and registers the `handle_new_user` trigger on `auth.users`.
+  </Step>
+</Steps>
+
+## Antipatterns table schema
+
+The `public.antipatterns` table is the core of the catalog. Columns are split across two migrations.
+
+### Base columns (migration 002)
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | `bigserial` | Primary key | Auto-incrementing integer ID |
+| `slug` | `text` | Unique, not null | URL-safe identifier used in `app/antipatterns/[slug]/` |
+| `title` | `text` | Not null | Display title, e.g. `"The Invisible Close Button"` |
+| `excerpt` | `text` | Not null | One-sentence summary shown in catalog cards |
+| `category` | `text` | Not null | One of 12 categories (Forms, Navigation, Accessibility, etc.) |
+| `impact` | `text` | `CHECK` in `('Critical','High','Medium','Low')` | Severity rating |
+| `cover_url` | `text` | Nullable | URL to a cover image; remote patterns configured in `next.config.ts` |
+| `wcag_refs` | `text[]` | Default `'{}'` | Array of WCAG 2.1/2.2 success criteria, e.g. `["1.4.3 — Contrast (Minimum)"]` |
+| `code_fix` | `text` | Nullable | Production-ready React/Tailwind code snippet demonstrating the fix |
+| `published` | `boolean` | Default `true` | Set to `false` to hide an entry without deleting it |
+| `created_at` | `timestamptz` | Default `now()` | Record creation timestamp |
+| `updated_at` | `timestamptz` | Default `now()` | Last-updated timestamp |
+
+### Detail columns (migration 003)
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `stat_line` | `text` | Quantified evidence, e.g. `"99 % of users fail to close the modal on the first attempt"` |
+| `why` | `text` | Researcher's explanation of why this pattern fails |
+| `bad_description` | `text` | Short description of the problematic implementation |
+| `good_description` | `text` | Short description of the correct implementation |
+| `nielsen_refs` | `text[]` | Nielsen's 10 heuristics violated, e.g. `["#1 — Visibility of system status"]` |
+| `business_impact` | `text` | Quantified commercial consequence (conversion loss, CLV impact, etc.) |
+| `pro_tip` | `text` | Practitioner advice shown as an annotation on the code fix |
+| `user_story` | `text` | Verbatim anonymous user quote illustrating the friction |
+
+### Row-level security
+
+RLS is enabled on `public.antipatterns`. Only one policy exists:
+
+```sql
+create policy "Antipatterns are public"
+  on public.antipatterns for select
+  using (published = true);
+```
+
+All read access is public — no authentication is required to browse the catalog. Write access is not exposed through the anon key; use the Supabase dashboard or the service role key in a secure server context to insert or update records.
+
+## Profiles table
+
+Migration 004 ensures the `profiles` table has the columns the app depends on. The table is keyed to `auth.users` via `id`.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | `uuid` | Foreign key to `auth.users.id` (primary key) |
+| `username` | `text` | Unique display username |
+| `display_name` | `text` | Human-readable name |
+| `avatar_url` | `text` | Profile picture URL |
+| `bio` | `text` | Short user bio |
+| `website` | `text` | Personal website URL |
+| `updated_at` | `timestamptz` | Last profile update |
+
+### Profiles RLS policies
+
+```sql
+-- Anyone can read any profile
+create policy "Public profiles are viewable by everyone."
+  on profiles for select using (true);
+
+-- Users can only insert their own profile row
+create policy "Users can insert their own profile."
+  on profiles for insert with check (auth.uid() = id);
+
+-- Users can only update their own profile row
+create policy "Users can update their own profile."
+  on profiles for update using (auth.uid() = id);
+```
+
+### New user trigger
+
+When a user signs up, the `handle_new_user` trigger automatically creates a row in `profiles` from the OAuth / signup metadata:
+
+```sql
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, display_name, username, avatar_url)
+  values (
+    new.id,
+    new.raw_user_meta_data->>'display_name',
+    new.raw_user_meta_data->>'username',
+    new.raw_user_meta_data->>'avatar_url'
+  );
+  return new;
+end;
+$$ language plpgsql security definer;
+
+create or replace trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+```
+
+## The `upsert_antipattern()` function
+
+Migration 003 installs a PL/pgSQL helper for idempotent seeding. It performs an `INSERT … ON CONFLICT (slug) DO UPDATE`, so running it multiple times is safe.
+
+### Signature
+
+```sql
+select upsert_antipattern(
+  p_slug            text,
+  p_title           text,
+  p_excerpt         text,
+  p_category        text,
+  p_impact          text,          -- 'Critical' | 'High' | 'Medium' | 'Low'
+  p_stat_line       text,
+  p_why             text,
+  p_bad_description text,
+  p_good_description text,
+  p_nielsen_refs    text[],
+  p_wcag_refs       text[],
+  p_code_fix        text,
+  p_business_impact text,
+  p_pro_tip         text,
+  p_user_story      text
+);
+```
+
+### Seeding a new antipattern
+
+Call the function from the SQL editor with real data. The example below seeds the "Invisible Close Button" entry:
+
+```sql
+select upsert_antipattern(
+  'invisible-close',
+  'The Invisible Close Button',
+  'A promotional modal with a 50% grey overlay and a white × on a light-grey background.',
+  'Dark Patterns',
+  'Critical',
+  '99 % of users fail to close the modal on the first attempt (internal A/B, N=4,200).',
+  'A promotional overlay with a near-invisible × forces users to hunt for the exit.',
+  'White × on a #E0E0E0 background. Contrast ratio: 1.3:1.',
+  'Dark-ink × with a clear 44 × 44 px touch target and visible border.',
+  array['#1 — Visibility of system status', '#6 — Recognition rather than recall'],
+  array['1.4.3 — Contrast (Minimum)', '2.4.7 — Focus Visible'],
+  '// ✅ Fixed
+<button aria-label="Close modal" className="w-11 h-11 border-2 border-[#1C1917]/30 bg-white shadow-sm">
+  <X className="size-5" />
+</button>',
+  'Increases bounce rate by 14 % on mobile devices.',
+  'The close action should be the most obvious element after the content itself.',
+  '"I just wanted to read the article, but this box popped up and I couldn''t find the X."'
+);
+```
+
+Migration 003 already seeds five antipatterns this way:
+
+| Slug | Title | Category | Impact |
+|------|-------|----------|--------|
+| `invisible-close` | The Invisible Close Button | Dark Patterns | Critical |
+| `password-validation` | Schizophrenic Password Validation | Forms | High |
+| `cancellation-labyrinth` | Subscription Cancellation Labyrinth | Dark Patterns | High |
+| `insufficient-contrast` | Insufficient Text Contrast | Accessibility | High |
+| `swapped-buttons` | Swapped Confirm / Destructive Buttons | Feedback | Critical |
+
+<Note>
+The `published` column defaults to `true`. To draft an antipattern without surfacing it on the site, pass `published = false` in an `UPDATE` after the upsert.
+</Note>
+
+## Connecting from the app
+
+The project uses two different connection patterns depending on the rendering context.
+
+### Browser client
+
+For Client Components, import `createClient` from `lib/supabase/client.ts`. It uses `createBrowserClient` from `@supabase/ssr`:
+
+```ts lib/supabase/client.ts
+import { createBrowserClient } from "@supabase/ssr";
+
+export function createClient() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
+```
+
+### Server / RSC client
+
+For Server Components and Route Handlers, import `createClient` from `lib/supabase/server.ts`. It uses `createServerClient` with the Next.js `cookies()` store:
+
+```ts lib/supabase/server.ts
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+
+export async function createClient() {
+  const cookieStore = await cookies();
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: { getAll() { return cookieStore.getAll(); }, /* ... */ } }
+  );
+}
+```
+
+### Static client
+
+For build-time data fetching (such as `generateStaticParams`), use `createStaticClient`. It uses the base `@supabase/supabase-js` client with no cookie context:
+
+```ts
+import { createStaticClient } from "@/lib/supabase/server";
+
+export async function generateStaticParams() {
+  const supabase = createStaticClient();
+  const { data } = await supabase.from("antipatterns").select("slug");
+  return (data ?? []).map((p) => ({ slug: p.slug }));
+}
+```
+
+<Warning>
+Do not use `createClient()` (the cookie-based server client) inside `generateStaticParams`. The `cookies()` API is not available during the Next.js build phase. Use `createStaticClient()` instead.
+</Warning>

@@ -1,0 +1,157 @@
+---
+title: "Deployment"
+description: "Deploy Bad UI to Vercel with a hosted Supabase backend."
+---
+
+## Deploying to Vercel
+
+Vercel is the recommended deployment platform for Bad UI. It has first-class support for Next.js App Router features including Server Components, Server Actions, and `generateStaticParams`.
+
+<Steps>
+  <Step title="Push your code to GitHub">
+    Bad UI's repository is at [github.com/jaanque/badui](https://github.com/jaanque/badui). Fork or push to your own GitHub account before importing into Vercel.
+  </Step>
+
+  <Step title="Import the project in Vercel">
+    Go to [vercel.com/new](https://vercel.com/new), click **Import**, and select your repository. Vercel automatically detects Next.js and sets the framework preset correctly.
+
+    <Note>
+    Leave the **Build Command** and **Output Directory** fields at their defaults. Vercel runs `next build` and serves from `.next/` automatically.
+    </Note>
+  </Step>
+
+  <Step title="Add environment variables">
+    In the Vercel project settings, go to **Settings → Environment Variables** and add the following variables for **Production**, **Preview**, and **Development** environments:
+
+    | Variable | Value | Where to find it |
+    |----------|-------|------------------|
+    | `NEXT_PUBLIC_SUPABASE_URL` | `https://<ref>.supabase.co` | Supabase dashboard → Settings → API |
+    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJ...` (anon/public key) | Supabase dashboard → Settings → API |
+
+    <Warning>
+    Both variables are exposed in the browser bundle because of the `NEXT_PUBLIC_` prefix. Use **only** the anon key here. Never set a service role key as a `NEXT_PUBLIC_` variable.
+    </Warning>
+  </Step>
+
+  <Step title="Deploy">
+    Click **Deploy**. Vercel runs:
+
+    ```bash
+    next build
+    ```
+
+    During the build, `generateStaticParams` in `app/antipatterns/[slug]/page.tsx` queries Supabase to pre-render all published antipattern pages at build time. This requires `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to be present in the build environment.
+
+    After a successful build, `next start` is invoked automatically to serve the application.
+  </Step>
+</Steps>
+
+## Build and start commands
+
+These are the commands Vercel (and any other host) will run:
+
+```bash
+npm run build   # next build  — compiles the app and pre-renders static pages
+npm run start   # next start  — serves the production build
+```
+
+You can run these locally to verify the production build before deploying:
+
+```bash
+npm run build && npm run start
+```
+
+Open [http://localhost:3000](http://localhost:3000) to inspect the production output.
+
+## Static params generation
+
+`app/antipatterns/[slug]/page.tsx` exports a `generateStaticParams` function. At build time Next.js calls this to pre-render one HTML file per antipattern slug:
+
+```ts app/antipatterns/[slug]/page.tsx
+export async function generateStaticParams() {
+  const supabase = createStaticClient();
+  const { data } = await supabase.from("antipatterns").select("slug");
+  return (data ?? []).map((p) => ({ slug: p.slug }));
+}
+```
+
+`createStaticClient()` (from `lib/supabase/server.ts`) uses the base `@supabase/supabase-js` client rather than the cookie-aware `@supabase/ssr` server client. This is necessary because the `cookies()` API is unavailable during the static build phase.
+
+<Tip>
+Antipatterns with `published = false` are excluded by the RLS policy on `public.antipatterns`, so they are never pre-rendered and will return a 404 at runtime.
+</Tip>
+
+## Image remote patterns
+
+`next.config.ts` allows `next/image` to load images from two external domains:
+
+```ts next.config.ts
+images: {
+  remotePatterns: [
+    {
+      protocol: "https",
+      hostname: "zdyjuemvyygyislqwynu.supabase.co",
+      pathname: "/storage/v1/object/public/**",
+    },
+    {
+      protocol: "https",
+      hostname: "www.eskimoz.fr",
+      pathname: "/**",
+    },
+  ],
+},
+```
+
+If you deploy with a different Supabase project, update the `hostname` in this config to match your own project reference.
+
+## Supabase: hosted vs. self-hosted
+
+<CardGroup cols={2}>
+  <Card title="Supabase Cloud (recommended)" icon="cloud">
+    Create a project at supabase.com. All infrastructure is managed for you — database, Auth, Storage, and Edge Functions. The free tier is sufficient for development and small production workloads.
+  </Card>
+  <Card title="Self-hosted Supabase" icon="server">
+    Run the full Supabase stack locally or on your own infrastructure using Docker. Use `supabase start` from the Supabase CLI to spin up a local Postgres instance with all services.
+  </Card>
+</CardGroup>
+
+### Local Supabase with the CLI
+
+If you want a fully local development environment without connecting to Supabase Cloud:
+
+```bash
+# Start the local Supabase stack (requires Docker)
+supabase start
+
+# Apply migrations
+supabase db push
+```
+
+The CLI prints local credentials when it starts. Use those values for `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in your `.env.local`.
+
+```bash
+# Typical local values from `supabase start`
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...  # printed by supabase start
+```
+
+<Note>
+The local Supabase stack does not persist data between `supabase stop` and `supabase start` by default. Use `supabase stop --no-backup` carefully, or rely on the migration files to re-seed the database.
+</Note>
+
+## Production checklist
+
+- Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are set in the Vercel environment.
+- All three migrations (`002`, `003`, `004`) have been applied to the production Supabase project.
+- The `published` column is `true` for any antipatterns you want visible.
+- The `hostname` in `next.config.ts` matches your Supabase project reference if you changed projects.
+- `npm run build` completes without errors locally before pushing.
+
+<CardGroup cols={2}>
+  <Card title="Database setup" icon="database" href="/development/database">
+    Run migrations and seed the antipatterns table.
+  </Card>
+  <Card title="Local setup" icon="laptop" href="/development/setup">
+    Review the local development prerequisites and scripts.
+  </Card>
+</CardGroup>

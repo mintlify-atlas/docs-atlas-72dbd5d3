@@ -1,0 +1,132 @@
+---
+title: "Feedback & States"
+description: "Swapped confirm/destructive buttons, ephemeral error toasts, silent success, and missing loading indicators — documented antipatterns from the Feedback & States category."
+keywords: ["feedback antipatterns", "loading states", "error messages", "toast notifications", "button states", "UI feedback"]
+---
+
+Feedback antipatterns occur when the interface fails to communicate what is happening, what just happened, or what the user should do next. They range from permanently destructive (wrong button triggers data deletion) to silently confusing (success that looks like nothing happened at all).
+
+## What this category covers
+
+Feedback antipatterns concentrate around four failure modes:
+
+1. **State confusion** — buttons, indicators, and visual treatments that misrepresent the action they trigger
+2. **Ephemeral errors** — error information that disappears before the user can act on it
+3. **Silent transitions** — success or failure states that produce no visible change
+4. **Loading ambiguity** — operations that run without any indication of progress or expected duration
+
+## Documented antipatterns
+
+### Swapped confirm / destructive buttons — Critical impact
+
+The "Cancel" button uses the primary (bright, prominent) button style. The "Delete Account" or "Confirm Deletion" button uses the secondary (muted, grey) style. The visual hierarchy communicates that the big blue button is the safe default action. 23% of users in usability testing accidentally delete their data.
+
+**Stat:** 23% accidental deletion rate in usability testing sessions.
+
+**Why it fails:** Users rely on visual hierarchy and learned conventions to make split-second decisions in destructive action dialogs. When the conventional "primary" style is applied to "Cancel" and the conventional "secondary" style is applied to "Delete forever", users act on the visual signal, not the label.
+
+**The fix:**
+
+```tsx
+// Correct: destructive action is visually prominent in the danger color
+// Non-destructive action (cancel) is secondary
+<div className="flex justify-end gap-3">
+  <button className="text-gray-600 px-4 py-2">
+    Cancel
+  </button>
+  <button className="bg-red-600 text-white font-bold px-4 py-2">
+    Delete account
+  </button>
+</div>
+```
+
+### Ephemeral toast errors — Medium impact
+
+An error toast appears for 1.2 seconds, then vanishes. There is no persistent error log, no retry mechanism, and no way for the user to see what went wrong. The operation silently fails.
+
+**Stat:** Error visible for 1.2 s. No log, no retry. The user never knows what went wrong.
+
+**Why it fails:** Errors that users cannot act on are worse than no feedback at all — they create anxiety without resolution. WCAG 4.1.3 (Status Messages) requires that status messages be programmatically determinable so assistive technologies can announce them. A 1.2-second toast is also too short for screen readers to fully announce.
+
+**The fix:**
+
+```tsx
+// Errors must persist until dismissed, with a retry action
+{error && (
+  <div
+    role="alert"
+    aria-live="assertive"
+    className="border border-red-500 bg-red-50 p-4 rounded"
+  >
+    <p className="font-bold text-red-800">{error.message}</p>
+    <button onClick={retry} className="mt-2 text-sm underline">
+      Try again
+    </button>
+    <button onClick={dismiss} aria-label="Dismiss error">
+      <X className="size-4" />
+    </button>
+  </div>
+)}
+```
+
+### Silent success
+
+An action completes — a form submits, a file uploads, a record saves — and nothing changes. No confirmation message, no visual change, no next step. Users submit the form twice, believing the first submission failed.
+
+**The fix:** Every completed action needs a visible, persistent acknowledgment. A brief toast for low-stakes actions; an inline confirmation state or route change for high-stakes ones.
+
+## Why these patterns are harmful
+
+| Effect | Evidence |
+|---|---|
+| Data loss | 23% accidental deletion rate with swapped button styles (internal usability test, N = session data) |
+| Support ticket volume | Swapped buttons cause "I accidentally deleted X" tickets — among the highest-cost support categories |
+| CLV impact | Accidental deletions directly impact customer lifetime value and are rarely recoverable |
+| Double submission | Silent success causes duplicate orders, duplicate account creation, and duplicate support requests |
+
+## WCAG criteria violated
+
+| Criterion | Level | Description |
+|---|---|---|
+| **4.1.3** Status Messages | AA | Status messages must be programmatically determinable without focus |
+| **3.3.2** Labels or Instructions | A | Instructions for error recovery must be available |
+| **4.1.2** Name, Role, Value | A | UI component states must be exposed to assistive technology |
+
+## Nielsen heuristics violated
+
+- **#1 — Visibility of system status:** The system must always keep users informed of what is happening, through appropriate, timely feedback.
+- **#4 — Consistency and standards:** Destructive actions must follow consistent visual conventions across the entire product.
+- **#9 — Help users recognise, diagnose, and fix errors:** Error messages must be specific, constructive, and persistent enough to act on.
+
+## How to identify these patterns
+
+<AccordionGroup>
+  <Accordion title="Button style audit">
+    List every confirmation or destructive dialog in the product. For each one, verify: does the most visually prominent button correspond to the intended default action? For destructive dialogs, the destructive action should be in a red or clearly danger-signaling style, never in the primary brand color.
+  </Accordion>
+  <Accordion title="Error persistence audit">
+    Trigger every error state in the product. Measure how long each error message remains on screen. Any error that disappears automatically before the user has had time to read and act on it is a failure.
+  </Accordion>
+  <Accordion title="Success state audit">
+    Complete every form and every action in the product. For each one, verify that a visible, persistent acknowledgment appears. "The button changed color for a second" is not adequate confirmation.
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+  Swapped button styles in destructive dialogs are a Critical-severity defect. The 23% accidental deletion rate is not a usability inconvenience — it is a data integrity failure that generates direct support costs and permanent user trust damage.
+</Warning>
+
+<Tip>
+  For every dialog that triggers an irreversible action, apply this rule: the most visually prominent button must be the one you want users to think twice about. Make the safe exit obvious and the destructive action clearly marked.
+</Tip>
+
+## Browse the feedback library
+
+<CardGroup cols={2}>
+  <Card title="View all Feedback antipatterns" icon="book" href="https://badui.dev/library?category=feedback">
+    Filter the full catalog to the Feedback & States category
+  </Card>
+  <Card title="Back to all categories" icon="grid-2" href="/categories/overview">
+    Return to the category overview
+  </Card>
+</CardGroup>

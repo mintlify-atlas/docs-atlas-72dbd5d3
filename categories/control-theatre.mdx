@@ -1,0 +1,115 @@
+---
+title: "Control Theatre"
+description: "Blocked paste in password fields, disabled right-click, no keyboard shortcuts — documented antipatterns from the Control Theatre category."
+keywords: ["control theatre", "paste blocked", "right-click disabled", "false security", "UX antipatterns", "password field"]
+---
+
+Control theatre is the practice of implementing restrictions on user behavior that create the appearance of security, quality, or compliance without providing any actual protection — while actively degrading the user experience. The defining characteristic is the mismatch between the cost to the user and the benefit to the system.
+
+## What this category covers
+
+Control theatre antipatterns concentrate around three failure modes:
+
+1. **False security theater** — restrictions that inconvenience users without improving security
+2. **Capability removal** — disabling native browser or OS functionality with no user benefit
+3. **Forced workflows** — requiring users to take a specific path even when alternatives exist and are safe
+
+## Documented antipatterns
+
+### Blocked paste in password fields
+
+The password field — and often the "confirm password" field — blocks the `paste` event. Users cannot paste from their password manager. The practical consequence is that users with strong, unique passwords stored in a password manager are forced to type them manually, which often results in either: (a) a typo-induced lockout, or (b) the user replacing a strong password with a weak, typeable one.
+
+**Why it fails:** The National Cyber Security Centre (NCSC), NIST, and OWASP all explicitly recommend *against* blocking paste in password fields. The security rationale (preventing clipboard-based attacks) is not a real-world threat vector relative to the harm caused. Blocking paste actively degrades security by disincentivizing password manager use.
+
+**The fix:** Remove any `onPaste={(e) => e.preventDefault()}` handlers from password fields. Remove any listener that blocks the `paste` event on inputs.
+
+```tsx
+// Remove this entirely — it has no legitimate purpose
+// <input onPaste={(e) => e.preventDefault()} />
+
+// Correct: allow paste
+<input
+  type="password"
+  autoComplete="current-password"
+  aria-label="Password"
+/>
+```
+
+### Right-click disabled
+
+The context menu is disabled on images, text, or the entire page via `onContextMenu={(e) => e.preventDefault()}`. Common stated rationale: preventing image copying, preventing "view source", or preventing text selection for scraping.
+
+**Why it fails:** Disabling the context menu does not prevent any of these actions — they are all available via keyboard shortcuts and DevTools. The only users who rely on the context menu for these actions are non-technical users, who are not your threat model. The only users harmed are legitimate users with accessibility needs (who use the context menu to trigger accessibility features), and users on non-standard devices.
+
+**The fix:** Remove all `onContextMenu` blocking handlers. If you need to protect an asset, use licensing, watermarking, or authentication — not UI theater.
+
+### Forced mandatory account creation before checkout
+
+The checkout flow requires creating an account before the user can complete a purchase. Guest checkout is not available. The user's cart is cleared if they choose to log in instead of register.
+
+**Why it fails:** The Baymard Institute identifies forced account creation as the #1 reason for checkout abandonment, cited by 24% of abandoners. Guest checkout with post-purchase optional account creation is the established industry standard.
+
+**The fix:** Always offer guest checkout. Prompt for account creation after the purchase confirmation — at which point the user has already provided their email and the value proposition ("Save your order history") is concrete.
+
+### Disabled keyboard shortcuts
+
+Custom UI components that override or suppress standard keyboard shortcuts (`Ctrl+A` to select all, `Ctrl+Z` to undo, `Ctrl+C` to copy) without providing equivalent functionality.
+
+**Why it fails:** These shortcuts are deeply ingrained motor memory for most users. Suppressing them increases error rates and cognitive load. WCAG 2.1.4 (Character Key Shortcuts) requires that single-character shortcuts can be remapped or disabled.
+
+## Why these patterns are harmful
+
+| Effect | Evidence |
+|---|---|
+| Security regression | Blocking paste in password fields actively worsens password hygiene by discouraging password manager use |
+| Checkout abandonment | Forced account creation is the #1 cited cause of checkout abandonment (Baymard Institute) |
+| Accessibility failures | Removing browser/OS native controls disproportionately harms users with disabilities |
+| User frustration | Control theatre generates some of the most consistent negative user feedback of any antipattern category |
+
+## WCAG criteria violated
+
+| Criterion | Level | Description |
+|---|---|---|
+| **2.1.1** Keyboard | A | All functionality must be operable via keyboard |
+| **2.1.4** Character Key Shortcuts | A | Single-character shortcuts must be remappable or disableable |
+| **2.5.3** Label in Name | A | Accessible name must contain visible label text |
+
+## Nielsen heuristics violated
+
+- **#3 — User control and freedom:** Blocking native browser functionality removes capabilities users rely on as foundational.
+- **#4 — Consistency and standards:** Users expect keyboard shortcuts and context menus to work consistently across all applications.
+- **#10 — Help and documentation:** When native help mechanisms (like the browser context menu's "Inspect" for finding text) are removed, users lose the ability to self-serve.
+
+## How to identify these patterns
+
+<AccordionGroup>
+  <Accordion title="Paste blocking audit">
+    Attempt to paste into every password, email, and input field in your product. If paste is blocked anywhere, find and remove the `onPaste` or `paste` event handler responsible.
+  </Accordion>
+  <Accordion title="Context menu audit">
+    Right-click on every major element type (text, images, videos, links, the page background). If the context menu is suppressed, find and remove the `onContextMenu` handler.
+  </Accordion>
+  <Accordion title="Guest checkout audit">
+    Attempt to complete a purchase without creating or logging into an account. If this is impossible, the checkout flow has a major conversion defect.
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+  Blocking paste in password fields is not a security feature. NIST SP 800-63B explicitly states that password fields should allow paste to support password managers. Remove all paste-blocking code from authentication forms.
+</Warning>
+
+<Tip>
+  Before implementing any restriction on native browser behavior, ask: "What specific attack does this prevent, and what is the cost to legitimate users?" If you cannot answer the first question with evidence, do not implement the restriction.
+</Tip>
+
+## Browse the control theatre library
+
+<CardGroup cols={2}>
+  <Card title="View all Control Theatre antipatterns" icon="book" href="https://badui.dev/library?category=control-theatre">
+    Filter the full catalog to the Control Theatre category
+  </Card>
+  <Card title="Back to all categories" icon="grid-2" href="/categories/overview">
+    Return to the category overview
+  </Card>
+</CardGroup>

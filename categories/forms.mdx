@@ -1,0 +1,122 @@
+---
+title: "Forms"
+description: "Late validation, hidden labels, fields that wipe input on blur, and inaccessible date pickers — documented antipatterns from the Forms category."
+keywords: ["form antipatterns", "validation UX", "password field", "date picker", "form accessibility", "WCAG forms"]
+---
+
+Forms are the primary mechanism through which users complete goals — signing up, checking out, submitting data. They are also among the most failure-prone surfaces in any UI. The Forms category documents patterns that introduce friction, confusion, and abandonment at exactly the moments when user intent is highest.
+
+## What this category covers
+
+Forms antipatterns concentrate around three failure modes:
+
+1. **Validation failures** — errors surfaced too late, with insufficient guidance, or in a way that destroys what the user already typed
+2. **Input confusion** — labels that disappear, placeholders misused as labels, unclear field purposes
+3. **Interaction hostility** — inputs that wipe on blur, blocked paste, inaccessible custom controls
+
+## Documented antipatterns
+
+### Schizophrenic password validation — High impact
+
+Password requirements are hidden until the first failed submission. Each attempt reveals one new constraint: the symbol is required, then the `@` character is forbidden, then the minimum length increases. There is no single source of truth until the user has already failed multiple times.
+
+**Stat:** 6.4 average retries before success or abandonment. Drop-off rate: 34%.
+
+**Why it fails:** Revealing requirements only after failure turns a simple task into a guessing game. WCAG 3.3.2 (Labels or Instructions) requires that instructions necessary to complete a form are available before submission. WCAG 3.3.1 (Error Identification) requires that errors are described to users in text.
+
+**The fix:**
+
+```tsx
+// Show requirements upfront with live validation state
+<ul id="pw-reqs" aria-live="polite">
+  {reqs.map(r => (
+    <li
+      key={r.id}
+      className={r.test(value) ? "text-green-700" : "text-gray-500"}
+    >
+      {r.label}
+    </li>
+  ))}
+</ul>
+```
+
+### Birthday date picker from hell — Medium impact
+
+A native `<select>` element per field (day, month, year). On iOS, each tap opens a full-screen spinner picker. Average completion time: 90 seconds.
+
+**Why it fails:** Native select elements are cumbersome for date of birth entry because users must scroll through 31 days, 12 months, and potentially 100+ years. A plain text input with clear format guidance — or a purpose-built date component — is demonstrably faster.
+
+**The fix:** Use three numeric `<input type="text">` fields with `inputmode="numeric"`, explicit labels, and format hints (`DD`, `MM`, `YYYY`). For date ranges, consider a keyboard-navigable date picker with proper ARIA.
+
+```tsx
+<div role="group" aria-labelledby="dob-legend">
+  <span id="dob-legend" className="sr-only">Date of birth</span>
+  <label htmlFor="dob-day">Day (DD)</label>
+  <input id="dob-day" type="text" inputMode="numeric" maxLength={2} />
+  <label htmlFor="dob-month">Month (MM)</label>
+  <input id="dob-month" type="text" inputMode="numeric" maxLength={2} />
+  <label htmlFor="dob-year">Year (YYYY)</label>
+  <input id="dob-year" type="text" inputMode="numeric" maxLength={4} />
+</div>
+```
+
+## Why these patterns are harmful
+
+| Effect | Evidence |
+|---|---|
+| Reduced signup conversion | Hidden password requirements alone reduce onboarding conversion by up to 30% |
+| Increased support load | Validation errors generate disproportionate support tickets |
+| Accessibility failures | WCAG 3.3.1 and 3.3.2 violations expose legal risk under EN 301 549 and ADA |
+| Mobile abandonment | Complex date pickers cause 2-3× higher abandonment on touch devices |
+
+## WCAG criteria violated
+
+| Criterion | Level | Description |
+|---|---|---|
+| **3.3.1** Error Identification | A | Errors must be identified and described in text |
+| **3.3.2** Labels or Instructions | A | Instructions must be available before the user submits |
+| **1.3.1** Info and Relationships | A | Labels must be programmatically associated with their inputs |
+| **2.4.6** Headings and Labels | AA | Labels must be descriptive |
+
+## Nielsen heuristics violated
+
+- **#9 — Help users recognise, diagnose, and fix errors:** Error messages must plainly state what went wrong and how to fix it — not just that something is wrong.
+- **#4 — Consistency and standards:** If the rest of your site uses a pattern (e.g., inline validation), forms should follow the same convention.
+- **#6 — Recognition rather than recall:** Users should not have to remember what was required — requirements must remain visible.
+
+## How to identify these patterns
+
+<AccordionGroup>
+  <Accordion title="Audit checklist for forms">
+    - Submit every form with an empty or invalid field. Do error messages describe specifically what is wrong?
+    - Check every password or complex-requirement field. Are requirements visible *before* the first attempt?
+    - Test all date inputs on an iOS device or simulator. What is the actual time to complete?
+    - Tab through every input. Does focus remain visible at all times?
+    - Test with VoiceOver or NVDA. Is every label announced correctly?
+  </Accordion>
+  <Accordion title="Common false positives">
+    Placeholder text that looks like a label is not equivalent to a label. A visible placeholder disappears the moment the user starts typing, removing the label from view. Always use `<label>` elements, not placeholders.
+  </Accordion>
+  <Accordion title="When inline validation is appropriate">
+    Inline (on-blur) validation is appropriate for fields where the user can reasonably be expected to know the format upfront — for example, an email field. It is harmful for password fields where requirements are non-obvious, because it rewards the user's first attempt with an error instead of guidance.
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  Show all constraints upfront. Treat form requirements as documentation, not as a quiz. Users who know exactly what is expected will complete forms faster and with fewer errors.
+</Tip>
+
+<Note>
+  Baymard Institute research consistently rates form usability as one of the top three conversion levers in e-commerce checkout flows. Improving form validation alone can recover 5–15% of abandoned sessions.
+</Note>
+
+## Browse the forms library
+
+<CardGroup cols={2}>
+  <Card title="View all Forms antipatterns" icon="book" href="https://badui.dev/library?category=forms">
+    Filter the full catalog to the Forms category
+  </Card>
+  <Card title="Back to all categories" icon="grid-2" href="/categories/overview">
+    Return to the category overview
+  </Card>
+</CardGroup>

@@ -1,0 +1,102 @@
+---
+title: "Categories"
+description: "Bad UI organizes its 120+ antipatterns into 12 structured categories covering every major domain of frontend UX failure."
+keywords: ["categories", "forms", "navigation", "accessibility", "mobile", "dark patterns", "typography"]
+---
+
+Every antipattern belongs to one of 12 categories. Categories are the primary navigation dimension of the library — you can filter by them on the `/library` page or browse each one directly at `/category/[slug]`.
+
+<Tip>
+  The homepage renders the full 12-category grid in the **Pattern Categories** section. Click any card to go directly to that category's collection.
+</Tip>
+
+## All 12 categories
+
+<CardGroup cols={2}>
+  <Card title="Forms" icon="text-cursor-input" href="/categories/forms">
+    Late validation, hidden labels, fields that wipe input on blur.
+  </Card>
+  <Card title="Navigation" icon="navigation" href="/categories/navigation">
+    Hamburger menus hiding 90% of the app, broken breadcrumbs.
+  </Card>
+  <Card title="Accessibility" icon="accessibility" href="/categories/accessibility">
+    1.9:1 contrast ratios, focus traps, missing ARIA, keyboard-hostile UX.
+  </Card>
+  <Card title="Responsive & Mobile" icon="smartphone" href="/categories/mobile">
+    8 px tap targets, horizontal overflow, 9 px fonts on small screens.
+  </Card>
+  <Card title="Feedback & States" icon="alert-circle" href="/categories/feedback">
+    Silent success, spinnerless loading, vague "Something went wrong" errors.
+  </Card>
+  <Card title="Layout & Spacing" icon="layout-grid" href="/categories/layout">
+    Flat visual hierarchy, chaotic alignment, oppressive density.
+  </Card>
+  <Card title="Typography" icon="type" href="/categories/typography">
+    11 px body text, line-height 1.0, widows and orphans everywhere.
+  </Card>
+  <Card title="Dark Patterns" icon="ghost" href="/categories/dark-patterns">
+    Roach motels, shame-confirming dialogs, hidden checkout costs.
+  </Card>
+  <Card title="Loading & Timeouts" icon="clock" href="/categories/loading">
+    Silent timeouts, no state persistence after refresh, 5-second splashes.
+  </Card>
+  <Card title="Control Theatre" icon="eye-off" href="/categories/control-theatre">
+    Blocked paste in password fields, right-click disabled, no managers.
+  </Card>
+  <Card title="Notification Spam" icon="bell-ring" href="/categories/notifications">
+    Newsletter popup 0.3 s after load. Geolocation request with zero context.
+  </Card>
+  <Card title="Broken Micro-UX" icon="mouse-pointer-2" href="/categories/micro-ux">
+    Indicatorless carousels, scroll-jumping accordions, hover traps.
+  </Card>
+</CardGroup>
+
+## Category reference table
+
+| # | Category | Slug | Description |
+|---|----------|------|-------------|
+| 01 | **Forms** | `forms` | Late validation, hidden labels, fields that wipe input on blur. |
+| 02 | **Navigation** | `navigation` | Hamburger menus hiding 90% of the app, broken breadcrumbs. |
+| 03 | **Accessibility** | `accessibility` | 1.9:1 contrast ratios, focus traps, missing ARIA, keyboard-hostile UX. |
+| 04 | **Responsive & Mobile** | `mobile` | 8 px tap targets, horizontal overflow, 9 px fonts on small screens. |
+| 05 | **Feedback & States** | `feedback` | Silent success, spinnerless loading, vague "Something went wrong" errors. |
+| 06 | **Layout & Spacing** | `layout` | Flat visual hierarchy, chaotic alignment, oppressive density. |
+| 07 | **Typography** | `typography` | 11 px body text, line-height 1.0, widows and orphans everywhere. |
+| 08 | **Dark Patterns** | `dark-patterns` | Roach motels, shame-confirming dialogs, hidden checkout costs. |
+| 09 | **Loading & Timeouts** | `loading` | Silent timeouts, no state persistence after refresh, 5-second splashes. |
+| 10 | **Control Theatre** | `control` | Blocked paste in password fields, right-click disabled, no managers. |
+| 11 | **Notification Spam** | `notifications` | Newsletter popup 0.3 s after load. Geolocation request with zero context. |
+| 12 | **Broken Micro-UX** | `micro-ux` | Indicatorless carousels, scroll-jumping accordions, hover traps. |
+
+## Category URLs
+
+Each category is accessible at `/category/[slug]` in the Bad UI application. The `slug` column in the table above is the URL segment. For example, the Accessibility category is at `/category/accessibility`.
+
+The library filter panel on `/library` generates category filter buttons dynamically from published patterns — only categories with at least one live entry appear as a button.
+
+## Hall of shame examples by category
+
+The homepage features a hand-picked Hall of Shame section spotlighting three notorious patterns. Each is assigned to a category:
+
+<Tabs>
+  <Tab title="Dark Patterns">
+    **The Invisible Close Button** — A promotional modal with a 50% grey overlay and a white × on a light-grey background. 99% of users fail on the first attempt to close it.
+  </Tab>
+  <Tab title="Forms">
+    **Schizophrenic Password Validation** — Requirements only shown after the first failed submit. Changing the input to satisfy one rule triggers a new error. The `@` symbol is forbidden with no explanation. Average retries: 6.4.
+  </Tab>
+  <Tab title="Navigation">
+    **Scroll Hijacking Hero** — Scrolling the mouse wheel moves a lateral carousel instead of the page. Users abandon within 4 seconds.
+  </Tab>
+</Tabs>
+
+## Filtering the library by category
+
+You can scope the `/library` archive to a single category two ways:
+
+1. Click a category button in the **Focus Area** filter panel on `/library`.
+2. Navigate directly to `/category/[slug]` to view the full collection for that category.
+
+<Note>
+  Category filter buttons on `/library` are built from the live Supabase data, so they reflect only categories that have at least one published pattern.
+</Note>

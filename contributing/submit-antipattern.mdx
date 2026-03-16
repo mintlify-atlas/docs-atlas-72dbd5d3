@@ -1,0 +1,367 @@
+---
+title: 'Submit an antipattern'
+description: 'Step-by-step guide for preparing and submitting a new entry to the Bad UI catalog.'
+keywords: ['submit', 'antipattern', 'contribution', 'upsert', 'sql', 'wcag', 'nielsen']
+---
+
+This guide covers every field required to submit a new antipattern, how to use the `upsert_antipattern()` SQL function, and how to write the content sections that most frequently need revision.
+
+## Before you start
+
+<Note>
+Read the [contributing overview](/contributing/overview) first. It explains what makes a good entry and how the review process works.
+</Note>
+
+You need the following before starting:
+
+- A specific, observable UI failure (not a general best-practice opinion)
+- At least one WCAG 2.1/2.2 criterion number and name it violates
+- At least one Nielsen heuristic number and name it violates
+- A first-person user story that sounds like a real affected user
+- A working React + Tailwind CSS code fix
+
+## Submission workflow
+
+<Steps>
+  <Step title="Choose a slug">
+    The slug is the permanent URL identifier for the antipattern. It must be unique across the entire catalog.
+
+    Rules:
+    - Lowercase, hyphen-separated words only: `invisible-close`, `password-validation`
+    - Descriptive of the specific failure, not the category
+    - Maximum 60 characters
+    - No special characters, no underscores
+
+    ```text
+    Good:  invisible-close
+    Good:  swapped-confirm-destructive-buttons
+    Bad:   Dark_Pattern_1
+    Bad:   bad-modal
+    ```
+  </Step>
+
+  <Step title="Write the title and excerpt">
+    The `title` is the display name shown in the catalog. The `excerpt` is the one-sentence description shown in cards and search results.
+
+    **Title** — be specific and optionally dramatic. Real titles in the catalog:
+    - "The Invisible Close Button"
+    - "Schizophrenic Password Validation"
+    - "Subscription Cancellation Labyrinth"
+    - "Swapped Confirm / Destructive Buttons"
+
+    **Excerpt** — state the exact failure in one sentence. Include measurements where you have them:
+
+    ```text
+    Good: "White × on a #E0E0E0 background. Contrast ratio: 1.3:1."
+    Good: "#9CA3AF on #F3F4F6 — ratio 1.9:1. WCAG minimum is 4.5:1."
+    Bad:  "A close button that is hard to see."
+    ```
+  </Step>
+
+  <Step title="Set category and impact">
+    Assign the entry to one of the 12 categories (see the [overview](/contributing/overview#categories) for the full list and slugs).
+
+    The `impact` field accepts exactly four values:
+
+    | Value | When to use |
+    |---|---|
+    | `Critical` | Causes data loss, permanent action errors, or near-total task failure. Example: 23% accidental deletion rate. |
+    | `High` | Causes significant drop-off, conversion loss, or accessibility violations for a broad user segment. Example: 34% signup abandonment. |
+    | `Medium` | Causes friction, confusion, or slower task completion. Example: 90-second average form completion instead of 20 seconds. |
+    | `Low` | Causes minor annoyance or suboptimal experience with limited measurable impact. |
+  </Step>
+
+  <Step title="Write the stat_line">
+    A single sentence with a specific, quantified stat about the antipattern's real-world cost. This appears as a callout on the detail page.
+
+    ```text
+    Good: "99% of users fail to close the modal on the first attempt (internal A/B, N=4,200)."
+    Good: "6.4 average retries before success or abandonment. Drop-off rate: 34%."
+    Good: "Average time to cancel: 8.5 minutes compared to 12 seconds for signup."
+    Bad:  "This pattern is very bad for users."
+    ```
+
+    <Tip>
+    If you do not have your own data, cite publicly available research: Baymard Institute benchmarks, Nielsen Norman Group studies, WebAIM screen reader surveys, or published usability test results. Cite the source in parentheses.
+    </Tip>
+  </Step>
+
+  <Step title="Write why, bad_description, and good_description">
+    These three fields explain the antipattern in detail.
+
+    **`why`** — two to four sentences explaining the cognitive or perceptual mechanism that makes this pattern harmful. Focus on why users fail, not just that they fail:
+
+    ```text
+    "Revealing requirements only after failure turns a simple task into a
+    frustrating guessing game. Users have no mental model for what the
+    field expects, so each attempt is a blind guess that erodes trust."
+    ```
+
+    **`bad_description`** — describe the exact bad implementation with technical specifics:
+
+    ```text
+    Good: "White × on a #E0E0E0 background. Contrast ratio: 1.3:1."
+    Good: "Empty field with placeholder 'Password'. Requirements hidden until first failed submit."
+    Bad:  "The close button is not visible."
+    ```
+
+    **`good_description`** — describe the correct implementation with the same specificity:
+
+    ```text
+    Good: "Dark-ink × with a clear 44×44px touch target and visible border."
+    Good: "Requirements listed upfront. Live validation states shown as the user types."
+    Bad:  "Make the button visible."
+    ```
+  </Step>
+
+  <Step title="Add WCAG and Nielsen references">
+    Both `wcag_refs` and `nielsen_refs` are arrays of strings. Each string must include the criterion/heuristic number and its full name.
+
+    **WCAG format:** `"<criterion number> — <criterion name>"`
+
+    ```sql
+    array['1.4.3 — Contrast (Minimum)', '2.4.7 — Focus Visible']
+    ```
+
+    Common WCAG criteria used in the catalog:
+    - `1.4.3 — Contrast (Minimum)` — 4.5:1 ratio for normal text
+    - `1.4.6 — Contrast (Enhanced)` — 7:1 ratio
+    - `2.4.3 — Focus Order`
+    - `2.4.7 — Focus Visible`
+    - `3.3.1 — Error Identifying`
+    - `3.3.2 — Labels or Instructions`
+    - `3.2.4 — Consistent Identification`
+    - `4.1.2 — Name, Role, Value`
+
+    **Nielsen format:** `"#<number> — <heuristic name>"`
+
+    ```sql
+    array['#1 — Visibility of system status', '#6 — Recognition rather than recall']
+    ```
+
+    Nielsen's 10 heuristics:
+
+    | # | Heuristic |
+    |---|---|
+    | 1 | Visibility of system status |
+    | 2 | Match between system and the real world |
+    | 3 | User control and freedom |
+    | 4 | Consistency and standards |
+    | 5 | Error prevention |
+    | 6 | Recognition rather than recall |
+    | 7 | Flexibility and efficiency of use |
+    | 8 | Aesthetic and minimalist design |
+    | 9 | Help users recognise, diagnose, fix errors |
+    | 10 | Help and documentation |
+  </Step>
+
+  <Step title="Write the code_fix">
+    The `code_fix` field contains a JSX snippet showing the corrected implementation. It must:
+
+    - Start with a comment line: `// ✅ Fixed — <brief description>`
+    - Use React 19 JSX syntax
+    - Use Tailwind CSS 4 utility classes
+    - Be self-contained and copy-pasteable
+    - Demonstrate the fix directly, not the surrounding page
+
+    ```jsx
+    // ✅ Fixed — visible, accessible, properly sized
+    <button
+      aria-label="Close modal"
+      className="w-11 h-11 border-2 border-[#1C1917]/30 bg-white shadow-sm"
+    >
+      <X className="size-5" />
+    </button>
+    ```
+
+    ```jsx
+    // ✅ Fixed — requirements upfront with live validation
+    <ul id="pw-reqs">
+      {reqs.map(r => (
+        <li className={r.test(v) ? "text-green-600" : "text-stone-400"}>
+          {r.label}
+        </li>
+      ))}
+    </ul>
+    ```
+
+    <Warning>
+    Do not include full component trees, import statements, or page-level boilerplate. The code_fix field renders in a code block on the detail page and should illustrate the fix at the element level.
+    </Warning>
+  </Step>
+
+  <Step title="Write the business_impact and pro_tip">
+    **`business_impact`** — one to two sentences quantifying the business consequence. Focus on metrics: conversion rate, support ticket volume, churn, CLV, bounce rate:
+
+    ```text
+    Good: "Increases bounce rate by 14% on mobile devices as users perceive
+           the site as broken or unresponsive."
+    Good: "Directly reduces signup conversion by up to 30% during the critical
+           onboarding flow."
+    Bad:  "This is bad for the business."
+    ```
+
+    **`pro_tip`** — one to two sentences of practitioner advice. This should be opinionated and direct:
+
+    ```text
+    Good: "If you use a modal, the 'Close' action should be the most obvious
+           element after the content itself."
+    Good: "Don't treat password requirements like a security secret.
+           Be transparent and helpful."
+    Bad:  "Always test your UI with users."
+    ```
+  </Step>
+
+  <Step title="Write the user_story">
+    A first-person quote from a fictional but realistic affected user. Write it as if verbatim from a usability test session. It must:
+
+    - Be in quotation marks
+    - Use plain, non-technical language
+    - Describe a specific moment of failure
+    - Be 1-3 sentences
+
+    ```text
+    Good: "I just wanted to read the article, but this box popped up and I
+           couldn't find the X. I ended up just closing the whole tab."
+
+    Good: "I tried four different passwords and it kept telling me I was wrong
+           without saying why. I just gave up and used Google login."
+
+    Bad:  "The UI was confusing and I didn't know what to do."
+    ```
+  </Step>
+
+  <Step title="Call upsert_antipattern() or submit the form">
+    If you have Supabase access, call the `upsert_antipattern()` function directly. Otherwise, use the submit form on the site at [badui.dev/submit](https://badui.dev/submit).
+
+    See the full function signature below.
+  </Step>
+</Steps>
+
+## The `upsert_antipattern()` function
+
+This PostgreSQL function inserts a new antipattern or updates an existing one by `slug`. It is the canonical way to seed entries into the catalog database.
+
+```sql
+select upsert_antipattern(
+  p_slug            => 'your-slug-here',
+  p_title           => 'Your Antipattern Title',
+  p_excerpt         => 'One-sentence description of the exact failure.',
+  p_category        => 'Dark Patterns',
+  p_impact          => 'High',
+  p_stat_line       => 'Quantified stat about real-world cost (source).',
+  p_why             => 'Why this pattern causes cognitive or perceptual failure.',
+  p_bad_description => 'Specific description of the bad implementation.',
+  p_good_description=> 'Specific description of the correct implementation.',
+  p_nielsen_refs    => array['#3 — User control and freedom'],
+  p_wcag_refs       => array['2.4.3 — Focus Order', '3.2.4 — Consistent Identification'],
+  p_code_fix        => '// ✅ Fixed\n<button className="...">...</button>',
+  p_business_impact => 'Quantified business consequence.',
+  p_pro_tip         => 'Direct practitioner advice.',
+  p_user_story      => '"First-person quote from an affected user."'
+);
+```
+
+### Parameters
+
+<ParamField path="body.p_slug" type="string" required>
+  URL-safe identifier. Lowercase, hyphen-separated. Must be unique across all antipatterns. Used as the page URL: `/antipatterns/<slug>`.
+</ParamField>
+
+<ParamField path="body.p_title" type="string" required>
+  Display name shown in catalog cards, search results, and the detail page heading.
+</ParamField>
+
+<ParamField path="body.p_excerpt" type="string" required>
+  One-sentence description of the specific failure. Shown in cards and search results. Include measurements where available.
+</ParamField>
+
+<ParamField path="body.p_category" type="string" required>
+  One of the 12 catalog categories. Must match an existing category slug exactly: `Forms`, `Navigation`, `Accessibility`, `Responsive & Mobile`, `Feedback & States`, `Layout & Spacing`, `Typography`, `Dark Patterns`, `Loading & Timeouts`, `Control Theatre`, `Notification Spam`, or `Broken Micro-UX`.
+</ParamField>
+
+<ParamField path="body.p_impact" type="string" required>
+  Severity level. Must be one of: `Critical`, `High`, `Medium`, `Low`.
+</ParamField>
+
+<ParamField path="body.p_stat_line" type="string">
+  One sentence with a specific quantified stat. Displayed as a callout on the detail page.
+</ParamField>
+
+<ParamField path="body.p_why" type="string">
+  Two to four sentences explaining the cognitive or perceptual mechanism that makes the pattern harmful.
+</ParamField>
+
+<ParamField path="body.p_bad_description" type="string">
+  Technical description of the bad implementation with exact values (hex colors, pixel sizes, ratios).
+</ParamField>
+
+<ParamField path="body.p_good_description" type="string">
+  Technical description of the correct implementation with the same specificity as `bad_description`.
+</ParamField>
+
+<ParamField path="body.p_nielsen_refs" type="string[]">
+  Array of Nielsen heuristic references. Format: `'#<number> — <heuristic name>'`. Example: `array['#1 — Visibility of system status', '#6 — Recognition rather than recall']`.
+</ParamField>
+
+<ParamField path="body.p_wcag_refs" type="string[]">
+  Array of WCAG 2.1/2.2 success criterion references. Format: `'<criterion> — <name>'`. Example: `array['1.4.3 — Contrast (Minimum)', '2.4.7 — Focus Visible']`.
+</ParamField>
+
+<ParamField path="body.p_code_fix" type="string">
+  JSX snippet showing the corrected implementation. Must start with `// ✅ Fixed — <description>`. Uses React 19 and Tailwind CSS 4.
+</ParamField>
+
+<ParamField path="body.p_business_impact" type="string">
+  One to two sentences quantifying the business consequence: conversion rate, bounce rate, support volume, churn, or CLV impact.
+</ParamField>
+
+<ParamField path="body.p_pro_tip" type="string">
+  One to two sentences of direct practitioner advice. Should be opinionated and actionable.
+</ParamField>
+
+<ParamField path="body.p_user_story" type="string">
+  First-person quote from a fictional but realistic affected user. In quotation marks. Describes a specific moment of failure.
+</ParamField>
+
+## The ContributeCTA component
+
+The `ContributeCTA` component (`components/home/ContributeCTA.tsx`) renders the contribution call-to-action section at the bottom of the home page. It provides two entry points:
+
+- **Report Pattern** — links to the web form for submitting a new antipattern at [badui.dev/submit](https://badui.dev/submit)
+- **GitHub Project** — links to the project repository for code contributions and issue tracking
+
+The component displays the catalog's open-source license (CC BY 4.0), the community-powered nature of the project, and the review process note: "Every entry is reviewed by our board, standardized for impact, and published to help 100k+ developers."
+
+<Tip>
+The fastest way to contribute is the "Report Pattern" button in the `ContributeCTA` section at the bottom of the home page. It links directly to [badui.dev/submit](https://badui.dev/submit).
+</Tip>
+
+## Full example: Invisible Close Button
+
+The entry below is a real catalog entry you can use as a reference for format and specificity:
+
+```sql
+select upsert_antipattern(
+  'invisible-close',
+  'The Invisible Close Button',
+  'A promotional modal with a 50% grey overlay and a white × on a light-grey background.',
+  'Dark Patterns',
+  'Critical',
+  '99% of users fail to close the modal on the first attempt (internal A/B, N=4,200).',
+  'A promotional overlay with a near-invisible × forces users to hunt for the exit.
+   The cognitive cost of finding a way out is enough for most users to abandon the page.',
+  'White × on a #E0E0E0 background. Contrast ratio: 1.3:1.',
+  'Dark-ink × with a clear 44×44px touch target and visible border.',
+  array['#1 — Visibility of system status', '#6 — Recognition rather than recall'],
+  array['1.4.3 — Contrast (Minimum)', '2.4.7 — Focus Visible'],
+  '// ✅ Fixed — visible, accessible, properly sized
+<button aria-label="Close modal" className="w-11 h-11 border-2 border-[#1C1917]/30 bg-white shadow-sm">
+  <X className="size-5" />
+</button>',
+  'Increases bounce rate by 14% on mobile devices as users perceive the site as broken or unresponsive.',
+  'If you use a modal, the "Close" action should be the most obvious element after the content itself.',
+  '"I just wanted to read the article, but this box popped up and I couldn'\''t find the X.
+   I ended up just closing the whole tab."'
+);
+```

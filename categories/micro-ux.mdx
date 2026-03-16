@@ -1,0 +1,209 @@
+---
+title: "Broken Micro-UX"
+description: "Indicatorless carousels, scroll-jumping accordions, hover traps, and focus loss on dynamic updates — documented antipatterns from the Broken Micro-UX category."
+keywords: ["micro-UX antipatterns", "carousel", "accordion", "hover trap", "focus management", "scroll jump", "animation"]
+---
+
+Micro-UX antipatterns are small interaction failures that individually seem minor but compound into a product that feels unreliable, frustrating, and poorly built. Unlike macro failures (a broken checkout, an invisible close button), micro-UX failures are felt rather than identified — users experience them as friction without being able to articulate why.
+
+## What this category covers
+
+Micro-UX antipatterns concentrate around four failure modes:
+
+1. **Affordance failures** — components that provide no indication of how they work or how many states they have
+2. **Scroll and layout disruption** — components that unexpectedly move the page during interaction
+3. **Focus management failures** — keyboard focus that is lost or moved unexpectedly after dynamic content changes
+4. **Hover traps and timing issues** — interactions that require precise timing or cursor positioning to complete
+
+## Documented antipatterns
+
+### Indicatorless carousels
+
+A carousel (slider) displays content items one at a time but provides no visual indication of: how many items exist, which item is currently visible, or how to navigate between items.
+
+**Why it fails:** Without indicators (pagination dots, item counts, navigation arrows), the carousel is perceived as a single static item by most users. Research consistently shows that carousel items beyond the first have near-zero interaction rates when there is no indicator of their existence. The user has no way to know there is more content.
+
+**The fix:**
+
+```tsx
+<div role="region" aria-label="Featured items" aria-live="polite">
+  <div className="overflow-hidden">
+    <div
+      className="flex transition-transform duration-300"
+      style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+    >
+      {items.map((item, i) => (
+        <div key={item.id} role="tabpanel" aria-label={`Item ${i + 1} of ${items.length}`}>
+          {item.content}
+        </div>
+      ))}
+    </div>
+  </div>
+
+  {/* Navigation controls — always visible */}
+  <div role="tablist" className="flex gap-2 justify-center mt-4">
+    {items.map((_, i) => (
+      <button
+        key={i}
+        role="tab"
+        aria-selected={i === currentIndex}
+        aria-label={`Go to item ${i + 1}`}
+        onClick={() => setCurrentIndex(i)}
+        className={i === currentIndex ? "bg-gray-900" : "bg-gray-300"}
+      />
+    ))}
+  </div>
+  <span className="sr-only" aria-live="polite">
+    Item {currentIndex + 1} of {items.length}
+  </span>
+</div>
+```
+
+### Scroll-jumping accordions
+
+Clicking to open an accordion item causes the page to scroll unexpectedly — either jumping to keep the expanded content in view, or jumping because the expanded content pushed the viewport anchor off-screen.
+
+**Why it fails:** Unexpected scrolling is disorienting. The user's visual focus was on the accordion header they clicked; suddenly the page has moved and they have lost their reading position. This is especially problematic when multiple accordions are used in a table-of-contents pattern where the user is scanning through multiple items.
+
+**The fix:**
+
+```tsx
+// Use CSS for accordion expansion, not DOM insertion
+const [open, setOpen] = useState(false);
+
+<div>
+  <button
+    onClick={() => setOpen(!open)}
+    aria-expanded={open}
+    aria-controls="accordion-content"
+  >
+    Section title
+    <ChevronDown
+      className={`transition-transform ${open ? "rotate-180" : ""}`}
+      aria-hidden="true"
+    />
+  </button>
+  <div
+    id="accordion-content"
+    role="region"
+    className={`overflow-hidden transition-all duration-200 ${
+      open ? "max-h-96" : "max-h-0"
+    }`}
+  >
+    {children}
+  </div>
+</div>
+```
+
+Using `max-height` CSS transition instead of conditional rendering avoids layout recalculation that causes jumps. Avoid using `scrollIntoView` on open unless the user explicitly cannot see the content.
+
+### Hover traps
+
+A dropdown menu or tooltip appears on hover but requires precise cursor movement to reach before it closes. The active area is separated from the trigger by a pixel gap, or the menu closes the instant the cursor exits the trigger element — before the user can move to a menu item.
+
+**Why it fails:** This is a Fitts's Law failure combined with a timing problem. The user must move quickly and precisely from the trigger to the menu without crossing outside the active zone. This disproportionately affects users with motor impairments and users on trackpads.
+
+**The fix:**
+
+```tsx
+// Use a delay before closing on mouse-leave
+const [open, setOpen] = useState(false);
+const closeTimer = useRef<NodeJS.Timeout>();
+
+const handleMouseLeave = () => {
+  closeTimer.current = setTimeout(() => setOpen(false), 300);
+};
+
+const handleMouseEnter = () => {
+  clearTimeout(closeTimer.current);
+  setOpen(true);
+};
+```
+
+Also ensure the hover menu and its trigger share a continuous interactive area — no pixel gaps between the trigger and the menu that would close the menu if crossed.
+
+### Focus loss on dynamic updates
+
+When content updates dynamically (a list item is deleted, a dialog closes, a step advances), keyboard focus is dropped to `<body>` instead of moving to a logical next element. The keyboard user is disoriented and must Tab from the top of the page to continue.
+
+**The fix:**
+
+```tsx
+const nextFocusRef = useRef<HTMLElement>(null);
+
+const handleDelete = (id: string) => {
+  deleteItem(id);
+  // Move focus to the next logical element after deletion
+  nextFocusRef.current?.focus();
+};
+
+// When a dialog closes, return focus to the element that opened it
+const triggerRef = useRef<HTMLButtonElement>(null);
+
+const closeDialog = () => {
+  setDialogOpen(false);
+  // Return focus to trigger on close
+  triggerRef.current?.focus();
+};
+```
+
+## Why these patterns are harmful
+
+| Effect | Evidence |
+|---|---|
+| Invisible content | Carousel items beyond position 1 have near-zero engagement without visible indicators |
+| Motor accessibility | Hover traps fail WCAG 2.5.1 for pointer gestures and disproportionately harm users with motor impairments |
+| Keyboard accessibility | Focus loss makes sequential keyboard navigation impossible after dynamic updates |
+| Perceived quality | Micro-UX failures compound into a product that feels unstable and untrustworthy |
+
+## WCAG criteria violated
+
+| Criterion | Level | Description |
+|---|---|---|
+| **2.1.1** Keyboard | A | All functionality must be operable via keyboard |
+| **2.4.3** Focus Order | A | Focus must follow a sequence that preserves meaning and operability |
+| **2.4.7** Focus Visible | AA | Keyboard focus indicator must be visible |
+| **2.5.1** Pointer Gestures | A | All functionality using pointer gestures must have a single-pointer alternative |
+| **4.1.3** Status Messages | AA | Dynamic content changes must be communicated to assistive technology |
+
+## Nielsen heuristics violated
+
+- **#1 — Visibility of system status:** Carousels with no indicators hide system state from the user.
+- **#3 — User control and freedom:** Hover traps and scroll jumps remove user control over navigation.
+- **#4 — Consistency and standards:** Unexpected scroll behavior and focus loss violate the consistency users expect from interactive components.
+
+## How to identify these patterns
+
+<AccordionGroup>
+  <Accordion title="Carousel audit">
+    Navigate to every carousel in the product. Without hovering or clicking, can you tell how many items exist? Is there a visual indicator of current position? Try navigating using keyboard only — is this possible?
+  </Accordion>
+  <Accordion title="Accordion scroll-jump test">
+    Open and close each accordion item on the page. Does the page scroll when you open an item? Was the scroll intentional and expected, or disorienting? Try this with a keyboard.
+  </Accordion>
+  <Accordion title="Focus management audit">
+    Navigate entirely by keyboard. After: closing a modal, deleting a list item, completing a step in a multi-step flow — where is your focus? Is it on a logical next element or has it been dropped?
+  </Accordion>
+  <Accordion title="Hover trap detection">
+    With dropdown menus and tooltip-based controls, try moving the cursor slowly from the trigger to the menu item. Does the menu remain open? Try with a slow cursor speed. Try on a trackpad.
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  The most reliable way to find micro-UX failures is to test every interactive component exclusively with a keyboard. Keyboard navigation exposes focus management failures, missing affordances, and broken interaction flows that mouse-only testing misses entirely.
+</Tip>
+
+<Note>
+  React's `useRef` and `focus()` are the primary tools for managing focus programmatically. Establish a pattern in your codebase: every dialog, drawer, and dynamic list must manage focus on open and close.
+</Note>
+
+## Browse the micro-UX library
+
+<CardGroup cols={2}>
+  <Card title="View all Micro-UX antipatterns" icon="book" href="https://badui.dev/library?category=micro-ux">
+    Filter the full catalog to the Broken Micro-UX category
+  </Card>
+  <Card title="Back to all categories" icon="grid-2" href="/categories/overview">
+    Return to the category overview
+  </Card>
+</CardGroup>

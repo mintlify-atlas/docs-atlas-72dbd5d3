@@ -1,0 +1,151 @@
+---
+title: "Typography"
+description: "11 px body text, line-height 1.0, widows and orphans everywhere — documented antipatterns from the Typography category."
+keywords: ["typography antipatterns", "font size", "line height", "readability", "web typography", "WCAG text"]
+---
+
+Typography antipatterns degrade readability at the most fundamental level — making text physically difficult to parse. Unlike layout or color issues, bad typography can make an otherwise well-designed interface feel broken and untrustworthy.
+
+## What this category covers
+
+Typography antipatterns concentrate around four failure modes:
+
+1. **Size failures** — body text set below readable thresholds
+2. **Density failures** — line height, letter spacing, or line length values that make text physically harder to track
+3. **Structural failures** — widows, orphans, and runts that signal lack of editorial care
+4. **Contrast and legibility** — typefaces or weight/color combinations that reduce legibility regardless of contrast ratio
+
+## Documented antipatterns
+
+### 11 px body text
+
+Body text set at 11 px is below the readable threshold for most users at standard display distances and resolutions. At 10–11 px, letters are rendered with so few pixels that glyph differentiation (distinguishing `n` from `m`, `i` from `l`) becomes unreliable.
+
+**Why it fails:** The browser default of 16 px exists because extensive typography research established it as the minimum comfortable reading size at a standard screen distance. Going below 14 px should require explicit justification; going below 12 px is universally inadvisable.
+
+**The fix:**
+
+```css
+/* Minimum viable body text */
+body {
+  font-size: 1rem;      /* 16px — browser default, well-calibrated */
+  line-height: 1.6;     /* Readable for body text */
+  max-width: 70ch;      /* Optimal line length for reading */
+}
+
+/* Scale down gracefully for small/secondary text */
+.text-secondary {
+  font-size: 0.875rem;  /* 14px — minimum for body-weight text */
+}
+
+.text-caption {
+  font-size: 0.75rem;   /* 12px — absolute minimum, use sparingly */
+}
+```
+
+### Line-height 1.0
+
+Line height of 1.0 (equal to the font size) means adjacent lines of text have zero space between them. Descenders from one line collide with ascenders from the next. The text is physically difficult to read because the eye cannot track from the end of one line to the beginning of the next.
+
+**Why it fails:** Optimal line height for body text is 1.4–1.6× the font size. Values below 1.2 impede the return sweep of the eye across a line. WCAG 1.4.12 (Text Spacing) requires that content remain functional when line height is increased to 1.5× the font size — which implies that 1.0 is already a failure.
+
+**The fix:**
+
+```css
+p, li, td {
+  line-height: 1.6; /* Comfortable body reading */
+}
+
+h1, h2, h3 {
+  line-height: 1.1; /* Tighter for large display text is acceptable */
+}
+
+.caption, .label {
+  line-height: 1.4; /* Still needs breathing room at small sizes */
+}
+```
+
+### Widows and orphans
+
+A widow is a short last line of a paragraph that appears alone at the top of a new column or page. An orphan is a short first line of a paragraph left alone at the bottom of a column or page. Both signal inattention to typographic craft and reduce readability.
+
+**The fix:**
+
+```css
+p {
+  orphans: 3;
+  widows: 3;
+}
+```
+
+Note: `orphans` and `widows` are CSS properties with broad browser support. They are not universally effective in continuous scroll layouts, but they work well in paginated or multi-column contexts.
+
+### Optimal line length
+
+Lines longer than 80–100 characters are consistently harder to read because the eye must travel further to complete the return sweep. Lines shorter than 45 characters break reading rhythm with too many line-breaks.
+
+**The fix:**
+
+```css
+article p, .prose {
+  max-width: 70ch; /* ch units are calibrated to the font being used */
+}
+```
+
+## Why these patterns are harmful
+
+| Effect | Evidence |
+|---|---|
+| Reduced comprehension | Small font sizes and tight line heights reduce reading speed and recall |
+| Mobile illegibility | 11 px body text on a 375 px viewport is effectively unreadable without zoom |
+| WCAG violations | Line-height 1.0 fails the WCAG 1.4.12 text spacing requirement |
+| Brand perception | Poor typography is consistently cited in UX research as a primary trust signal |
+
+## WCAG criteria violated
+
+| Criterion | Level | Description |
+|---|---|---|
+| **1.4.3** Contrast (Minimum) | AA | Small text has a lower contrast threshold but still requires 4.5:1 |
+| **1.4.4** Resize Text | AA | Text must be resizable to 200% without loss of functionality |
+| **1.4.12** Text Spacing | AA | Content must remain readable when line height, letter spacing, and word spacing are adjusted |
+
+## Nielsen heuristics violated
+
+- **#8 — Aesthetic and minimalist design:** Typography that is difficult to read is not minimal — it is broken. Minimalism means clarity, not density.
+- **#1 — Visibility of system status:** Content that cannot be read is effectively invisible, regardless of whether it technically renders.
+
+## How to identify these patterns
+
+<AccordionGroup>
+  <Accordion title="Font size audit">
+    In Chrome DevTools, open the Elements panel and inspect the computed font-size of every body text element. Flag any value below 14 px. Flag any value below 16 px on mobile inputs.
+  </Accordion>
+  <Accordion title="Line height audit">
+    Use the Computed tab in DevTools to inspect `line-height` on body text elements. Flag any value below 1.4 on body text.
+  </Accordion>
+  <Accordion title="WCAG 1.4.12 test">
+    Use a bookmarklet or browser extension that applies the WCAG 1.4.12 text spacing overrides (line-height: 1.5, letter-spacing: 0.12em, word-spacing: 0.16em). Verify that all content remains readable and no text is clipped or overlaps.
+  </Accordion>
+  <Accordion title="Line length check">
+    Count characters per line at the primary content column width. Aim for 60–80 characters for optimal readability. Lines under 45 or over 100 characters should be flagged.
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+  Setting `line-height: 1.0` on any text that a user is expected to read is a readability failure, not a stylistic choice. This is below the threshold at which normal reading is comfortable for any user.
+</Warning>
+
+<Tip>
+  Use the `ch` unit for max-width on text containers. `70ch` is calibrated to the actual font being used and will scale correctly regardless of the typeface or font size.
+</Tip>
+
+## Browse the typography library
+
+<CardGroup cols={2}>
+  <Card title="View all Typography antipatterns" icon="book" href="https://badui.dev/library?category=typography">
+    Filter the full catalog to the Typography category
+  </Card>
+  <Card title="Back to all categories" icon="grid-2" href="/categories/overview">
+    Return to the category overview
+  </Card>
+</CardGroup>

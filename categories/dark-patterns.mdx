@@ -1,0 +1,128 @@
+---
+title: "Dark Patterns"
+description: "Roach motels, confirmshaming dialogs, hidden checkout costs, invisible close buttons, and subscription cancellation labyrinths — documented antipatterns from the Dark Patterns category."
+keywords: ["dark patterns", "deceptive UX", "confirmshaming", "roach motel", "hidden costs", "cancellation labyrinth", "invisible close"]
+---
+
+Dark patterns are interface designs that deliberately work against the user's interests to serve the product's commercial goals. Unlike other antipattern categories, dark patterns are often intentional — which makes them not just a UX failure but an ethical and increasingly regulatory one.
+
+## What this category covers
+
+Dark patterns concentrate around four categories of deceptive design:
+
+1. **Obstruction** — making it artificially difficult to complete a desired user action (cancellation, unsubscription, account deletion)
+2. **Misdirection** — using visual design to lead users toward unintended actions (swapped buttons, hidden costs, pre-checked boxes)
+3. **Traps** — interfaces that are easy to enter and nearly impossible to exit (roach motels, auto-renewing subscriptions)
+4. **Coercion** — using emotional manipulation to override user judgment (confirmshaming, guilt-trip cancellation flows)
+
+## Documented antipatterns
+
+### The invisible close button — Critical impact
+
+A promotional modal overlays the page. The close button is a white `×` on a `#E0E0E0` background — a contrast ratio of 1.3:1. The user cannot see the close mechanism and cannot exit the overlay without abandoning the page.
+
+**Stat:** 99% of users fail to close the modal on the first attempt (internal A/B test, N=4,200).
+
+**Why it fails:** An overlay with no visible exit is a trap. Whether intentional or not, it produces the same outcome as an intentional dark pattern: the user cannot complete their intended task and abandons the site.
+
+**Business impact:** Increases bounce rate by 14% on mobile devices as users perceive the site as broken or unresponsive.
+
+**The fix:**
+
+```tsx
+// Accessible, visible close button with proper sizing
+<button
+  aria-label="Close modal"
+  onClick={onClose}
+  className="absolute top-4 right-4 w-11 h-11 flex items-center justify-center
+             border-2 border-stone-900/30 bg-white shadow-sm rounded
+             hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-amber-400"
+>
+  <X className="size-5" aria-hidden="true" />
+</button>
+```
+
+**User voice:** *"I just wanted to read the article, but this box popped up and I couldn't find the X. I ended up just closing the whole tab."*
+
+### Subscription cancellation labyrinth — High impact
+
+Cancelling a subscription requires navigating 6 screens, each designed to induce guilt or confusion. Screens include: "Here's what you'll lose", "Are you sure? (please don't go)", "Let us offer you a discount", "Tell us why you're leaving", "Final warning: your data will be deleted", and only then — a cancel button that still triggers a 30-day delayed cancellation.
+
+**Stat:** Average time to cancel: 8.5 minutes. Average time to sign up: 12 seconds.
+
+**Why it fails:** Forcing users through a multi-step guilt-trip sequence to cancel is a textbook roach motel dark pattern. While it may retain a small percentage of users short-term, it generates long-term brand damage and negative word-of-mouth.
+
+**Business impact:** While it may retain 5% more users short-term, it results in a 40% lower likelihood of those users ever returning to the platform.
+
+**The fix:**
+
+```tsx
+// Direct, respectful cancellation
+<button
+  onClick={handleCancel}
+  className="text-red-600 font-bold underline underline-offset-2"
+>
+  Cancel subscription
+</button>
+```
+
+**User voice:** *"I had to click through three pages of 'rewards' I never used just to find the cancel button. It felt like I was being held hostage."*
+
+## Regulatory context
+
+Dark patterns are increasingly regulated:
+
+- **EU Digital Services Act (DSA):** Prohibits "dark patterns" that distort or impair users' free and informed decision-making
+- **FTC (US):** Has pursued enforcement actions against companies using deceptive cancellation flows under Section 5 of the FTC Act
+- **Norwegian Consumer Authority:** Fined Grindr €6.5M partly for dark pattern consent mechanisms
+- **California AB 2273:** Requires that account deletion be as easy as account creation
+
+## WCAG criteria violated
+
+| Criterion | Level | Description |
+|---|---|---|
+| **1.4.3** Contrast (Minimum) | AA | The invisible close button at 1.3:1 fails this criterion directly |
+| **2.4.3** Focus Order | A | Modal dialogs must trap focus correctly — invisible close buttons often break this |
+| **3.2.4** Consistent Identification | AA | Components with the same function must be identified consistently |
+
+## Nielsen heuristics violated
+
+- **#3 — User control and freedom:** Users need a clearly marked emergency exit. Cancellation labyrinths directly violate this heuristic.
+- **#1 — Visibility of system status:** An invisible close button makes the user's exit path invisible.
+- **#4 — Consistency and standards:** Deceptive button styling violates the convention that visual prominence signals intended action priority.
+
+## How to identify these patterns
+
+<AccordionGroup>
+  <Accordion title="Cancellation flow audit">
+    Count the number of screens between a user clicking "Cancel subscription" and the subscription being cancelled. More than 2 screens is a dark pattern. More than 3 is egregious.
+  </Accordion>
+  <Accordion title="Close button contrast check">
+    For every modal or overlay, check the contrast ratio of the close button against its background. Anything below 4.5:1 is a WCAG failure; anything below 2:1 is effectively invisible.
+  </Accordion>
+  <Accordion title="Confirmshaming audit">
+    Read every modal opt-out label. If the "No thanks" option reads "No thanks, I don't want to save money" or similar, it is confirmshaming — a coercive dark pattern.
+  </Accordion>
+  <Accordion title="Hidden cost audit">
+    Complete a checkout flow to the final confirmation screen. Note every fee, charge, or subscription that was not prominently disclosed on the product page or early in the checkout flow.
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+  Dark patterns are not just a UX problem — they are increasingly a legal one. Regulator scrutiny of cancellation flows, consent manipulation, and deceptive defaults is intensifying across the EU and US. Document your intentional design decisions carefully.
+</Warning>
+
+<Tip>
+  If a user wants to leave, let them leave gracefully. Users who cancel without friction are more likely to return later than users who feel they were held hostage.
+</Tip>
+
+## Browse the dark patterns library
+
+<CardGroup cols={2}>
+  <Card title="View all Dark Patterns antipatterns" icon="book" href="https://badui.dev/library?category=dark-patterns">
+    Filter the full catalog to the Dark Patterns category
+  </Card>
+  <Card title="Back to all categories" icon="grid-2" href="/categories/overview">
+    Return to the category overview
+  </Card>
+</CardGroup>

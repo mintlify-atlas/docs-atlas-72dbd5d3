@@ -1,0 +1,131 @@
+---
+title: "Antipattern library"
+description: "A searchable, filterable archive of 120+ documented UI antipatterns with impact ratings, category tags, and individual audit reports."
+keywords: ["antipatterns", "library", "search", "filter", "impact", "catalog"]
+---
+
+The antipattern library is the core of Bad UI. It exposes every published pattern through a real-time client-side search and filter interface backed by Supabase.
+
+The homepage shows a preview of the three most recent patterns. The full interactive archive lives at `/library`.
+
+<CardGroup cols={2}>
+  <Card title="Full library archive" icon="book" href="https://badui.dev/library">
+    Browse and filter all 120+ published antipatterns
+  </Card>
+  <Card title="Browse by category" icon="shapes" href="/categories/overview">
+    Narrow your search to a specific UX domain
+  </Card>
+</CardGroup>
+
+## How the library works
+
+The library uses a two-component architecture:
+
+- **`FilteredPatterns`** (server component) — fetches all published antipatterns from Supabase ordered by `created_at` descending and passes the result to the client component.
+- **`FilteredPatternsClient`** (client component) — handles all filtering and search entirely in the browser with no additional network requests.
+
+When rendered in `variant="home"` mode on the homepage, only the first three results are shown regardless of filters. The full `/library` page uses `variant="full"`, which exposes all patterns and the complete filter panel.
+
+## Search
+
+The search input is available on the full library page at `/library`. It performs a case-insensitive substring match against three fields simultaneously:
+
+| Field | Example match |
+|-------|---------------|
+| `title` | "Invisible Close" matches "The Invisible Close Button" |
+| `excerpt` | "4.5:1" matches "WCAG minimum is 4.5:1" |
+| `category` | "access" matches "Accessibility" |
+
+<Tip>
+  Searching by category name is a fast way to scope results without changing the category filter button.
+</Tip>
+
+Typing in the search field updates results immediately. A clear (×) button appears when there is active input.
+
+## Filters
+
+The filter panel on the full library page has two independent dimensions. Both default to **All**.
+
+### Impact severity
+
+Four impact levels are available as toggle buttons:
+
+| Level | Meaning |
+|-------|---------|
+| **Critical** | Severe usability roadblock. High risk of immediate abandonment. |
+| **High** | Major friction point. Significantly degrades user satisfaction. |
+| **Medium** | Consistent annoyance. Slows down users and erodes trust. |
+| **Low** | Minor polish issue. Mostly aesthetic or edge-case friction. |
+
+### Focus area (category)
+
+Category filter buttons are built dynamically from the patterns returned by Supabase — only categories that have at least one published pattern appear. Selecting a category button narrows results to that category only.
+
+### Combining filters
+
+All three controls (search, impact, category) apply simultaneously using AND logic. A **Reset** button appears whenever any filter is active and clears all three at once.
+
+The result count updates in real time: `Showing N patterns`.
+
+<Note>
+  When zero patterns match the active filters, the library shows an empty state with the message "Zero matches, captain." — prompting you to broaden your search.
+</Note>
+
+## Pattern cards
+
+Each card in the library grid displays:
+
+| Field | Source |
+|-------|--------|
+| Cover image | `cover_url` from Supabase, or a category-initial placeholder |
+| Impact badge | `impact` — one of Critical, High, Medium, Low |
+| Category label | `category` string |
+| Title | `title` |
+| Excerpt | `excerpt` — a 1–3 sentence summary of the problem |
+| "Full Audit Report" link | Routes to `/antipatterns/[slug]` |
+
+The impact badge uses a color system to communicate severity at a glance:
+
+| Level | Badge style |
+|-------|-------------|
+| Critical | Amber background, dark text, amber drop shadow |
+| High | Dark background, light text, amber drop shadow |
+| Medium | Off-white background, dark text |
+| Low | White background, muted text |
+
+## Individual pattern pages
+
+Every card links to `/antipatterns/[slug]`. These pages are statically generated at build time via `generateStaticParams`, which queries all slugs from the `antipatterns` table.
+
+Each pattern page is structured as a three-section audit report:
+
+<Steps>
+  <Step title="01 / Observation">
+    Side-by-side comparison of the bad state (`bad_description`) and the optimal flow (`good_description`), plus an anonymous user quote (`user_story`) where available.
+  </Step>
+  <Step title="02 / Justification">
+    Commercial risk assessment (`business_impact`), WCAG success criteria references (`wcag_refs`), and Nielsen heuristic violation citations (`nielsen_refs`).
+  </Step>
+  <Step title="03 / Implementation">
+    Production-ready code fix (`code_fix`) shown in a syntax-highlighted code block, with an optional `pro_tip` sticky note.
+  </Step>
+</Steps>
+
+The page header also shows a researcher's summary (`why`) and the `stat_line` — a single data point quantifying observed user behavior (for example, "6.4 avg retries" or "Abandons in 4 s").
+
+## Navigating the library
+
+<CardGroup cols={2}>
+  <Card title="Full archive" icon="list" href="https://badui.dev/library">
+    Search and filter all published patterns at badui.dev/library
+  </Card>
+  <Card title="Forms antipatterns" icon="input-text" href="/categories/forms">
+    Browse patterns in the Forms category
+  </Card>
+  <Card title="Accessibility antipatterns" icon="universal-access" href="/categories/accessibility">
+    Browse patterns in the Accessibility category
+  </Card>
+  <Card title="Dark Patterns" icon="ghost" href="/categories/dark-patterns">
+    Browse deceptive UI patterns
+  </Card>
+</CardGroup>

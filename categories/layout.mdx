@@ -1,0 +1,123 @@
+---
+title: "Layout & Spacing"
+description: "Flat visual hierarchy, chaotic alignment, and oppressive information density — documented antipatterns from the Layout & Spacing category."
+keywords: ["layout antipatterns", "visual hierarchy", "spacing", "alignment", "information density", "Gestalt", "whitespace"]
+---
+
+Layout antipatterns occur when the spatial organization of a page fails to communicate priority, relationship, or structure. The result is an interface where users cannot identify what is important, where to start, or how elements relate to one another.
+
+## What this category covers
+
+Layout antipatterns concentrate around four failure modes:
+
+1. **Flat hierarchy** — all elements at the same visual weight, making priority invisible
+2. **Chaotic alignment** — elements that share no visual axis, creating visual noise
+3. **Oppressive density** — so much content in so little space that no element has room to breathe
+4. **Inconsistent spacing** — spacing values that follow no system, producing an arbitrary, unpolished result
+
+## Documented antipatterns
+
+### Flat visual hierarchy
+
+Every element on the page — headings, body text, labels, metadata, calls to action — uses the same or nearly the same font size, weight, and color. Users cannot determine where to start reading or which action is primary.
+
+**Why it fails:** Visual hierarchy is the primary mechanism through which layout communicates priority. Without it, the user must read every element to determine its importance — the cognitive equivalent of a document with no headings or paragraph breaks.
+
+**The fix:** Establish a clear type scale with meaningful size and weight differences between heading levels and body text. Use color and spacing to reinforce hierarchy, not just decoration.
+
+```tsx
+// Establish a consistent type scale
+const scale = {
+  h1: "text-4xl font-black tracking-tight",
+  h2: "text-2xl font-bold",
+  h3: "text-lg font-semibold",
+  body: "text-base font-normal",
+  caption: "text-sm text-gray-600",
+};
+```
+
+### Chaotic alignment
+
+Elements on a page share no common vertical or horizontal axis. Text starts at different left-edge positions. Buttons are left-aligned in some cards and right-aligned in others. The page has no implied grid.
+
+**Why it fails:** Alignment is a Gestalt grouping mechanism. Elements that share an axis are perceived as related. When nothing is aligned, nothing is grouped, and the page reads as a collection of unrelated fragments.
+
+**The fix:** Define a grid system and enforce it. Every element should be positioned on a grid column or aligned to a consistent spacing unit.
+
+```tsx
+// Use a grid to enforce alignment
+<div className="grid grid-cols-12 gap-6 max-w-7xl mx-auto px-6">
+  <main className="col-span-8">
+    {/* Content */}
+  </main>
+  <aside className="col-span-4">
+    {/* Sidebar */}
+  </aside>
+</div>
+```
+
+### Oppressive density
+
+Content is packed at maximum density with minimal padding or whitespace. Every pixel is used. The result is an interface that feels overwhelming, where important information competes with unimportant information for the same visual weight.
+
+**Why it fails:** Whitespace is not empty space — it is a design element that groups content, creates breathing room, and signals importance. Pages without whitespace read as undifferentiated noise.
+
+**The fix:** Apply a consistent spacing scale (e.g., Tailwind's default 4-point grid). Use generous padding inside cards and containers. Separate unrelated content sections with meaningful vertical space.
+
+### Inconsistent spacing
+
+Spacing values (padding, margin, gap) are set to arbitrary pixel values rather than values from a consistent spacing scale. The result is that visually similar components have subtly different dimensions, making the interface feel unpolished and unintentional.
+
+**The fix:** Commit to a spacing system and use it exclusively. Tailwind CSS's default scale (4, 8, 12, 16, 20, 24, 32, 40, 48, 64 px) is well-calibrated. Avoid one-off values like `p-[13px]` or `mt-[7px]` unless driven by a specific constraint.
+
+## Why these patterns are harmful
+
+| Effect | Evidence |
+|---|---|
+| Reduced readability | Flat hierarchy and high density reduce reading speed and comprehension |
+| Lower conversion | Unclear visual hierarchy reduces CTA visibility and click-through rates |
+| Brand perception | Layout inconsistency correlates strongly with perceived product quality and trustworthiness |
+| Cognitive load | Dense, unstructured layouts increase time-on-task and error rates across all user segments |
+
+## WCAG criteria violated
+
+| Criterion | Level | Description |
+|---|---|---|
+| **1.3.1** Info and Relationships | A | Visual structure (hierarchy, grouping) must be conveyed programmatically |
+| **1.4.10** Reflow | AA | Content must reflow at 320 px without loss of information |
+| **1.4.12** Text Spacing | AA | Content must remain readable when text spacing is modified |
+
+## Nielsen heuristics violated
+
+- **#8 — Aesthetic and minimalist design:** Every unit of visual noise makes the relevant information harder to find. Remove, don't add.
+- **#1 — Visibility of system status:** If hierarchy is flat, primary actions are invisible.
+- **#4 — Consistency and standards:** Inconsistent spacing and alignment violate the user's expectation that similar elements behave similarly.
+
+## How to identify these patterns
+
+<AccordionGroup>
+  <Accordion title="Hierarchy audit">
+    Take a screenshot of the page and squint at it. Which elements jump out? Which are invisible? If you cannot identify the primary action and primary content within 3 seconds, the hierarchy is insufficient.
+  </Accordion>
+  <Accordion title="Alignment audit">
+    Overlay a grid on the page (browser extensions like PixelPerfect or Gridman work well). Every element should land on a grid column. Elements that don't are misaligned.
+  </Accordion>
+  <Accordion title="Spacing audit">
+    In DevTools, inspect the computed padding and margin values on representative elements. Do they conform to a consistent scale? Look for values like 13, 7, or 23 px — these are off-scale and indicate inconsistency.
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  The "squint test" is a reliable fast audit: blur your vision or squint at the page. A well-designed layout should still communicate its hierarchy — what's most important should visually dominate even when the details are unreadable.
+</Tip>
+
+## Browse the layout library
+
+<CardGroup cols={2}>
+  <Card title="View all Layout antipatterns" icon="book" href="https://badui.dev/library?category=layout">
+    Filter the full catalog to the Layout & Spacing category
+  </Card>
+  <Card title="Back to all categories" icon="grid-2" href="/categories/overview">
+    Return to the category overview
+  </Card>
+</CardGroup>

@@ -1,80 +1,271 @@
 ---
 title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+description: "Learn how to navigate badui.dev, browse the antipattern library, search and filter patterns, read full case studies, and manage your account."
 ---
 
-## Get started in three steps
+## What you'll learn
 
-Get your documentation site running locally and make your first customization.
+This guide covers everything you need to use the Bad UI website as a reader and researcher. By the end, you'll know how to navigate the library, filter patterns by category and impact, read a complete antipattern case study, and create an account to track your contributions.
 
-### Step 1: Set up your local environment
+<CardGroup cols={2}>
+  <Card title="Browse the library" icon="book-open" href="#browse-the-antipattern-library">
+    Search and filter 120+ documented patterns by category or impact level
+  </Card>
+  <Card title="Read a case study" icon="file-lines" href="#read-a-full-case-study">
+    Understand the structure of each antipattern audit report
+  </Card>
+  <Card title="Explore categories" icon="shapes" href="#browse-by-category">
+    Navigate all 12 antipattern taxonomy groups
+  </Card>
+  <Card title="Create an account" icon="user" href="#create-an-account">
+    Set up a profile to submit and track antipatterns
+  </Card>
+</CardGroup>
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+---
 
-### Step 2: Deploy your changes
+## Navigate to badui.dev
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+Open your browser and go to **[badui.dev](https://badui.dev)**. The homepage loads with eight sections arranged in a vertical scroll flow:
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+| Section | What it contains |
+|---|---|
+| **Hero** | Headline and the primary entry points to the library and taxonomy |
+| **Impact Stats** | Four research-backed statistics on the cost of bad UI |
+| **Antipattern Library** | A live-filtered preview of the three most recent patterns |
+| **Pattern Categories** | All 12 category cards linking to focused collections |
+| **Improvement Guides** | Quick-reference WCAG and Nielsen heuristic summaries |
+| **Tools & Resources** | Curated free tools for accessibility audits and contrast checking |
+| **Contribute CTA** | A prompt to submit a new antipattern to the catalog |
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+<Tip>
+  Use the anchor links in the navbar — **Library**, **Categories**, **Guides** — to jump directly to any section without scrolling the full page.
+</Tip>
 
-### Step 3: Go live
+---
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+## Browse the antipattern library
+
+The full interactive archive lives at **[badui.dev/library](https://badui.dev/library)**. Every published antipattern appears here.
+
+<Steps>
+  <Step title="Open the library">
+    Click **Explore Archive** on the homepage hero, or **Library** in the top navigation bar. Both routes take you to `/library`.
+  </Step>
+  <Step title="Search by keyword">
+    Use the search field at the top of the page. As you type, results update instantly. The search matches against:
+    - Pattern **title** (e.g., "Invisible Close Button")
+    - Pattern **excerpt** (e.g., "modal", "contrast", "paste")
+    - **Category** name (e.g., "Forms", "Dark Patterns")
+  </Step>
+  <Step title="Filter by impact level">
+    Below the search field, find the **Impact Severity** filter panel. Click any level to narrow results:
+
+    | Level | Meaning |
+    |---|---|
+    | **Critical** | Severe usability roadblock. High risk of immediate abandonment. |
+    | **High** | Major friction point. Significantly degrades user satisfaction. |
+    | **Medium** | Consistent annoyance. Slows down users and erodes trust. |
+    | **Low** | Minor polish issue. Mostly aesthetic or edge-case friction. |
+  </Step>
+  <Step title="Filter by category">
+    In the same filter panel, use **Focus Area** to select a single category (e.g., "Accessibility", "Navigation"). Category buttons populate dynamically from the patterns in the database.
+  </Step>
+  <Step title="Combine filters">
+    Impact level and category filters stack. For example, select **Critical** + **Forms** to see only critical-severity form antipatterns. A result counter above the grid shows how many patterns match.
+  </Step>
+  <Step title="Reset filters">
+    Click the **Reset** button (appears whenever any filter is active) to clear all selections and return to the full archive.
+  </Step>
+</Steps>
+
+<Note>
+  The homepage shows the three most recently published patterns as a preview. The full archive at `/library` shows every published pattern with no limit.
+</Note>
+
+Each pattern card in the grid displays:
+- A **cover image** (or category initial placeholder if no image is set)
+- An **impact badge** in the top-left corner of the image
+- The **category** label in amber uppercase text
+- The **title** and a short **excerpt**
+- A **Full Audit Report** link at the bottom of the card
+
+Click any card to open the full case study.
+
+---
+
+## Browse by category
+
+The **Pattern Categories** section on the homepage, and the dedicated **[badui.dev/categories](https://badui.dev/categories)** page, organizes all antipatterns into 12 taxonomy groups.
+
+<CardGroup cols={3}>
+  <Card title="Forms" icon="text-cursor-input">
+    Late validation, hidden labels, fields that wipe input on blur
+  </Card>
+  <Card title="Navigation" icon="compass">
+    Hamburger menus hiding 90% of the app, broken breadcrumbs
+  </Card>
+  <Card title="Accessibility" icon="universal-access">
+    1.9:1 contrast ratios, focus traps, missing ARIA, keyboard-hostile UX
+  </Card>
+  <Card title="Responsive & Mobile" icon="mobile">
+    8 px tap targets, horizontal overflow, 9 px fonts on small screens
+  </Card>
+  <Card title="Feedback & States" icon="triangle-exclamation">
+    Silent success, spinnerless loading, vague error messages
+  </Card>
+  <Card title="Layout & Spacing" icon="layout-grid">
+    Flat visual hierarchy, chaotic alignment, oppressive density
+  </Card>
+  <Card title="Typography" icon="type">
+    11 px body text, line-height 1.0, widows and orphans everywhere
+  </Card>
+  <Card title="Dark Patterns" icon="ghost">
+    Roach motels, shame-confirming dialogs, hidden checkout costs
+  </Card>
+  <Card title="Loading & Timeouts" icon="clock">
+    Silent timeouts, no state persistence after refresh, 5-second splash screens
+  </Card>
+  <Card title="Control Theatre" icon="eye-off">
+    Blocked paste in password fields, right-click disabled, no undo managers
+  </Card>
+  <Card title="Notification Spam" icon="bell">
+    Newsletter popups 0.3 s after load, geolocation requests without context
+  </Card>
+  <Card title="Broken Micro-UX" icon="mouse-pointer-2">
+    Indicatorless carousels, scroll-jumping accordions, hover traps
+  </Card>
+</CardGroup>
+
+Click any category card to open a filtered view of all patterns in that group.
+
+---
+
+## Read a full case study
+
+Each antipattern has its own dedicated page at `/antipatterns/[slug]`. Open one by clicking a card in the library or following a direct link.
+
+The case study page is structured as a three-part audit report:
+
+### 01 / Observation
+
+The first section shows the pattern in its broken and fixed states side by side:
+
+- **Rejected State** — a description and visual placeholder showing what the antipattern looks like in the wild, with a short italic description of the broken behavior
+- **Optimal Flow** — the corrected experience with a description of what a well-designed version does instead
+- **User Voice** — when available, an anonymous user quote describing the frustration this pattern causes
+
+### 02 / Justification
+
+The second section provides the evidence that this pattern matters:
+
+- **Commercial Risk Assessment** — a plain-language summary of the business consequences, conversion impact, or abandonment rate
+- **Impact severity** and confidence level for the documented finding
+- **Accessibility Check** — the specific WCAG 2.1 or 2.2 success criteria this pattern violates, listed individually
+- **Heuristic Violation** — the Nielsen usability heuristics this pattern breaks, cited by name
+
+### 03 / Implementation
+
+The third section gives you the fix:
+
+- **Code block** — production-ready React and Tailwind CSS that resolves the antipattern, shown in a full-width terminal-style display
+- **Pro Tip** — a sticky note with a practitioner insight about the fix, covering common edge cases or accessibility nuances worth knowing
+
+<Tip>
+  The **Next Case Study** button at the bottom of every report takes you to the homepage, where you can pick another pattern. Use the browser **Back** button or the **← badui.dev / research** header link to return to the library.
+</Tip>
+
+### Reading the impact stamp
+
+Every case study header shows a dashed-border stamp with the impact level. The four levels and their practical meanings:
+
+- **Critical** — Users cannot complete the task. Expect high abandonment rates and support volume.
+- **High** — Users complete the task but with significant frustration or error. Expect reduced conversion and trust.
+- **Medium** — Users notice the problem but work around it. Expect slower task completion and lower satisfaction scores.
+- **Low** — Most users won't notice unless pointed out. Affects polish and professional perception.
+
+---
+
+## Create an account
+
+An account lets you submit new antipatterns and appear as a contributor in the catalog. Registration is free.
+
+<Steps>
+  <Step title="Go to the registration page">
+    Navigate to **[badui.dev/register](https://badui.dev/register)**, or click **Sign in** in the navbar and then **Create one →** below the login form.
+  </Step>
+  <Step title="Enter your email and password">
+    Fill in a valid email address and a password of at least 8 characters. No username is required at this step — you set your display name after confirming your email.
+  </Step>
+  <Step title="Submit the form">
+    Click **Create account**. The page will show a confirmation banner:
+
+    > ✓ Check your email for a confirmation link.
+
+    Open your inbox and click the link in the email from badui.dev to verify your address.
+  </Step>
+  <Step title="Sign in">
+    Once verified, go to **[badui.dev/login](https://badui.dev/login)**, enter your email and password, and click **Sign in**. You'll be redirected to the homepage as a logged-in user.
+  </Step>
+</Steps>
+
+<Note>
+  If you see an error message on the registration page (for example, "User already registered"), the email address is already linked to an existing account. Go to `/login` instead.
+</Note>
+
+---
+
+## Use your profile
+
+After signing in, click your account avatar or the **Profile** link in the navbar to open your user dashboard at `/profile`.
+
+The dashboard shows:
+
+- Your **display name** (derived from your email prefix until you set one)
+- Your **Reports** count — the number of antipatterns you have submitted
+- Your **Kudos** count — recognition from other community members
+
+### Update your public profile
+
+<Steps>
+  <Step title="Open General Settings">
+    The **Public Profile** tab is selected by default when you land on `/profile`.
+  </Step>
+  <Step title="Edit your fields">
+    The profile form lets you set:
+    - **Username** — your unique handle visible on contributions
+    - **Display name** — the name shown in your dashboard header
+    - **Bio** — a short description of yourself visible to other members
+    - **Website** — an optional link to your portfolio or social profile
+  </Step>
+  <Step title="Save your changes">
+    Click **Save** to update your profile. Changes are visible immediately to other logged-in members.
+  </Step>
+</Steps>
+
+### Sign out
+
+In the left sidebar of the profile page, click **Sign out** to end your session. You'll be redirected to the homepage as a guest.
+
+<Tip>
+  The **Security** and **Contributions** tabs in the profile sidebar are listed as upcoming features and are not yet active.
+</Tip>
+
+---
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
-
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Antipattern library" icon="book" href="/features/antipattern-library">
+    Deep dive into how the library is structured and what each field means
+  </Card>
+  <Card title="Browse by category" icon="shapes" href="/categories/overview">
+    See the full taxonomy with descriptions of all 12 categories
+  </Card>
+  <Card title="Contributing" icon="code-pull-request" href="/contributing/overview">
+    Learn how to submit a new antipattern to the catalog
+  </Card>
+  <Card title="Development setup" icon="laptop" href="/development/setup">
+    Run the project locally if you want to contribute to the codebase
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

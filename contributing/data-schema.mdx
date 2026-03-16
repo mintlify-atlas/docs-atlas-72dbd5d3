@@ -1,0 +1,332 @@
+---
+title: 'Data schema'
+description: 'Full reference for the antipatterns table: every column, its type, constraints, and what good values look like.'
+keywords: ['schema', 'database', 'supabase', 'antipatterns', 'table', 'sql']
+---
+
+The catalog is backed by a single PostgreSQL table in Supabase: `public.antipatterns`. This page documents every column, its constraints, and the expected format for content fields.
+
+## Table definition
+
+The table was created across two migrations:
+
+- `002_antipatterns_schema.sql` — base table with core fields
+- `003_expand_antipatterns_details.sql` — detail fields and the `upsert_antipattern()` function
+
+```sql
+create table public.antipatterns (
+  id              bigserial primary key,
+  slug            text unique not null,
+  title           text not null,
+  excerpt         text not null,
+  category        text not null,
+  impact          text not null check (impact in ('Critical','High','Medium','Low')),
+  cover_url       text,
+  wcag_refs       text[] default '{}',
+  code_fix        text,
+  published       boolean default true,
+  created_at      timestamptz default now(),
+  updated_at      timestamptz default now(),
+  stat_line       text,
+  why             text,
+  bad_description text,
+  good_description text,
+  nielsen_refs    text[] default '{}',
+  business_impact text,
+  pro_tip         text,
+  user_story      text
+);
+```
+
+## Row-level security
+
+RLS is enabled on the table. The only active policy exposes rows where `published = true` to anonymous (public) reads:
+
+```sql
+create policy "Antipatterns are public"
+  on public.antipatterns for select
+  using (published = true);
+```
+
+Unpublished entries (where `published = false`) are not visible via the public API. Write access requires authentication.
+
+## Column reference
+
+### Identity and routing
+
+<ParamField path="body.id" type="bigserial" required>
+  Auto-incrementing primary key. Set by the database — never pass this in inserts.
+</ParamField>
+
+<ParamField path="body.slug" type="string" required>
+  URL-safe permanent identifier. Unique constraint enforced at the database level. Used as the page path: `/antipatterns/<slug>`. 
+
+  Format: lowercase, hyphen-separated words. Example: `invisible-close`, `password-validation`, `swapped-buttons`.
+
+  The `upsert_antipattern()` function uses `slug` as the conflict key — calling the function with an existing slug will update all other fields rather than inserting a duplicate.
+</ParamField>
+
+### Core display fields
+
+<ParamField path="body.title" type="string" required>
+  Display name shown in catalog cards, the library grid, and the detail page `<h1>`. Should be specific and descriptive.
+
+  Examples: `"The Invisible Close Button"`, `"Schizophrenic Password Validation"`, `"Subscription Cancellation Labyrinth"`.
+</ParamField>
+
+<ParamField path="body.excerpt" type="string" required>
+  One-sentence description of the specific failure. Displayed in catalog cards and search results. Include exact measurements (hex values, pixel sizes, ratios, error rates) where available.
+
+  Examples:
+  - `"White × on a #E0E0E0 background. Contrast ratio: 1.3:1."`
+  - `"#9CA3AF on #F3F4F6 — ratio 1.9:1. WCAG minimum is 4.5:1. Effectively invisible."`
+  - `"Bright button = Cancel. Muted button = Delete forever. Accidental deletion rate: 23%."`
+</ParamField>
+
+<ParamField path="body.category" type="string" required>
+  The catalog category this antipattern belongs to. Must match one of the 12 active categories:
+
+  `Forms`, `Navigation`, `Accessibility`, `Responsive & Mobile`, `Feedback & States`, `Layout & Spacing`, `Typography`, `Dark Patterns`, `Loading & Timeouts`, `Control Theatre`, `Notification Spam`, `Broken Micro-UX`.
+</ParamField>
+
+<ParamField path="body.impact" type="string" required>
+  Severity classification. Enforced by a `CHECK` constraint — only these four values are accepted:
+
+  | Value | Criteria |
+  |---|---|
+  | `Critical` | Causes data loss, permanent action errors, or near-total task failure (e.g., 23% accidental deletion rate, 99% first-attempt failure rate). |
+  | `High` | Causes significant measurable drop-off, broad accessibility failure, or conversion loss (e.g., 34% signup abandonment). |
+  | `Medium` | Causes friction, confusion, or significantly slower task completion without causing failure. |
+  | `Low` | Causes minor annoyance with limited measurable impact. |
+</ParamField>
+
+<ParamField path="body.cover_url" type="string">
+  Optional URL for a cover image displayed on the detail page. If null, the catalog renders a default visual. Accepts absolute HTTPS URLs or Supabase Storage paths.
+</ParamField>
+
+<ParamField path="body.published" type="boolean" default="true">
+  Controls visibility. Rows where `published = false` are hidden from all public queries by the RLS policy. Use `false` to stage an entry for review before making it visible.
+</ParamField>
+
+### Timestamps
+
+<ParamField path="body.created_at" type="timestamptz" default="now()">
+  Set automatically on insert. Never overwrite manually.
+</ParamField>
+
+<ParamField path="body.updated_at" type="timestamptz" default="now()">
+  Set automatically on insert. Should be updated to `now()` on any subsequent edit. The `upsert_antipattern()` function does not currently update this field — handle it in a trigger or manually after updates.
+</ParamField>
+
+### Detail content fields
+
+These fields were added in `003_expand_antipatterns_details.sql`. They power the antipattern detail page.
+
+<ParamField path="body.stat_line" type="string">
+  A single sentence with a specific, quantified stat about the antipattern's real-world cost. Displayed as a prominent callout on the detail page.
+
+  Examples:
+  - `"99% of users fail to close the modal on the first attempt (internal A/B, N=4,200)."`
+  - `"Average time to cancel: 8.5 minutes compared to 12 seconds for signup."`
+  - `"45% of users over age 50 cannot read the subtext at standard brightness."`
+</ParamField>
+
+<ParamField path="body.why" type="string">
+  Two to four sentences explaining the cognitive or perceptual mechanism that makes this pattern harmful. Focuses on why users fail, not just that they fail.
+
+  Example: `"Revealing requirements only after failure turns a simple task into a frustrating guessing game. Users have no mental model for what the field expects, so each attempt is a blind guess that erodes trust."`
+</ParamField>
+
+<ParamField path="body.bad_description" type="string">
+  Technical description of the bad implementation. Should include specific values: hex colors, pixel sizes, contrast ratios, timing values.
+
+  Examples:
+  - `"White × on a #E0E0E0 background. Contrast ratio: 1.3:1."`
+  - `"Empty field with placeholder 'Password'. Requirements hidden until first failed submit."`
+  - `"Multiple 'Are you sure?' screens with microscopic 'Yes, cancel' buttons and massive 'Keep my plan' buttons."`
+</ParamField>
+
+<ParamField path="body.good_description" type="string">
+  Technical description of the correct implementation. Should have the same level of specificity as `bad_description`.
+
+  Examples:
+  - `"Dark-ink × with a clear 44×44px touch target and visible border."`
+  - `"Requirements listed upfront. Live validation states shown as the user types."`
+  - `"A single, prominent 'Cancel Subscription' button with a simple confirmation modal."`
+</ParamField>
+
+<ParamField path="body.nielsen_refs" type="string[]" default="{}">
+  Array of Nielsen's 10 heuristics violated by this pattern. Each string must include the heuristic number and full name.
+
+  Format: `'#<number> — <heuristic name>'`
+
+  ```sql
+  array['#1 — Visibility of system status', '#6 — Recognition rather than recall']
+  ```
+
+  Full reference:
+
+  | Ref string | Heuristic |
+  |---|---|
+  | `#1 — Visibility of system status` | Users should always be informed about what is going on. |
+  | `#2 — Match between system and the real world` | Use language and concepts familiar to the user. |
+  | `#3 — User control and freedom` | Provide clearly marked emergency exits. |
+  | `#4 — Consistency and standards` | Follow platform conventions. |
+  | `#5 — Error prevention` | Prevent problems from occurring in the first place. |
+  | `#6 — Recognition rather than recall` | Make options visible rather than requiring memory. |
+  | `#7 — Flexibility and efficiency of use` | Accelerators for expert users. |
+  | `#8 — Aesthetic and minimalist design` | Remove irrelevant information. |
+  | `#9 — Help users recognise, diagnose, fix errors` | Error messages in plain language. |
+  | `#10 — Help and documentation` | Provide searchable, task-oriented documentation. |
+</ParamField>
+
+<ParamField path="body.wcag_refs" type="string[]" default="{}">
+  Array of WCAG 2.1/2.2 success criteria violated by this pattern. Each string must include the criterion number and name.
+
+  Format: `'<criterion> — <name>'`
+
+  ```sql
+  array['1.4.3 — Contrast (Minimum)', '2.4.7 — Focus Visible']
+  ```
+
+  Criteria commonly cited in the catalog:
+
+  | Criterion | Name | Level |
+  |---|---|---|
+  | 1.4.3 | Contrast (Minimum) | AA |
+  | 1.4.6 | Contrast (Enhanced) | AAA |
+  | 2.4.3 | Focus Order | A |
+  | 2.4.7 | Focus Visible | AA |
+  | 3.3.1 | Error Identifying | A |
+  | 3.3.2 | Labels or Instructions | A |
+  | 3.2.4 | Consistent Identification | AA |
+  | 4.1.2 | Name, Role, Value | A |
+</ParamField>
+
+<ParamField path="body.code_fix" type="string">
+  A JSX snippet demonstrating the corrected implementation. Rendered in a syntax-highlighted code block on the detail page.
+
+  Requirements:
+  - First line must be a comment: `// ✅ Fixed — <brief description>`
+  - React 19 JSX syntax
+  - Tailwind CSS 4 utility classes
+  - Self-contained at the element level — no imports, no full page trees
+
+  Example:
+
+  ```jsx
+  // ✅ Fixed — conventional hierarchy
+  <button className="bg-red-600 text-white">Delete Account</button>
+  <button className="text-grey-600">Cancel</button>
+  ```
+</ParamField>
+
+<ParamField path="body.business_impact" type="string">
+  One to two sentences quantifying the business consequence of the antipattern. Focus on measurable metrics: conversion rate, bounce rate, support ticket volume, churn, customer lifetime value.
+
+  Examples:
+  - `"Increases bounce rate by 14% on mobile devices as users perceive the site as broken or unresponsive."`
+  - `"Directly reduces signup conversion by up to 30% during the critical onboarding flow."`
+  - `"Causes massive support ticket volume and permanent data loss, which directly impacts customer lifetime value (CLV)."`
+</ParamField>
+
+<ParamField path="body.pro_tip" type="string">
+  One to two sentences of direct practitioner advice. Should be opinionated and immediately actionable.
+
+  Examples:
+  - `"If you use a modal, the 'Close' action should be the most obvious element after the content itself."`
+  - `"Don't treat password requirements like a security secret. Be transparent and helpful."`
+  - `"Always check your contrast ratios with a tool like Tota11y or Chrome DevTools. 'Aesthetic' is never an excuse for 'Illegible'."`
+</ParamField>
+
+<ParamField path="body.user_story" type="string">
+  A first-person quote from a fictional but realistic affected user. Written as if verbatim from a usability test session. Must be in quotation marks.
+
+  Examples:
+  - `"I just wanted to read the article, but this box popped up and I couldn't find the X. I ended up just closing the whole tab."`
+  - `"I tried four different passwords and it kept telling me I was wrong without saying why. I just gave up and used Google login."`
+  - `"I was outside in the sun and I literally couldn't see the text on the screen. It looked like an empty box."`
+</ParamField>
+
+## TypeScript interface
+
+The `DbAntipattern` interface in `components/home/data.ts` mirrors the table shape for use in the Next.js frontend:
+
+```typescript
+export interface DbAntipattern {
+  id: number;
+  slug: string;
+  title: string;
+  excerpt: string;
+  category: string;
+  impact: "Critical" | "High" | "Medium" | "Low";
+  cover_url: string | null;
+  wcag_refs?: string[];
+  nielsen_refs?: string[];
+  code_fix?: string | null;
+  stat_line?: string | null;
+  why?: string | null;
+  bad_description?: string | null;
+  good_description?: string | null;
+  business_impact?: string | null;
+  pro_tip?: string | null;
+  user_story?: string | null;
+}
+```
+
+Note that `published`, `created_at`, and `updated_at` are not included in this interface — they are not needed by the frontend and are excluded from the public select queries.
+
+## The upsert_antipattern() function
+
+The `upsert_antipattern()` function (defined in `003_expand_antipatterns_details.sql`) provides a safe, idempotent way to insert or update entries by slug. It does not accept `id`, `cover_url`, `published`, `created_at`, or `updated_at` — those are managed separately.
+
+```sql
+create or replace function upsert_antipattern(
+  p_slug             text,
+  p_title            text,
+  p_excerpt          text,
+  p_category         text,
+  p_impact           text,
+  p_stat_line        text,
+  p_why              text,
+  p_bad_description  text,
+  p_good_description text,
+  p_nielsen_refs     text[],
+  p_wcag_refs        text[],
+  p_code_fix         text,
+  p_business_impact  text,
+  p_pro_tip          text,
+  p_user_story       text
+) returns void;
+```
+
+On conflict with an existing `slug`, the function updates all fields except `id`, `created_at`, and `published`. This means you can safely re-run seed scripts without creating duplicate rows.
+
+<Warning>
+The function does not validate the `p_impact` value beyond what the table `CHECK` constraint enforces. Passing an invalid impact value (anything other than `Critical`, `High`, `Medium`, or `Low`) will raise a PostgreSQL constraint violation error.
+</Warning>
+
+## Seeded entries
+
+The following antipatterns are seeded by `003_expand_antipatterns_details.sql` and serve as the reference examples for content quality:
+
+| Slug | Title | Category | Impact |
+|---|---|---|---|
+| `invisible-close` | The Invisible Close Button | Dark Patterns | Critical |
+| `password-validation` | Schizophrenic Password Validation | Forms | High |
+| `cancellation-labyrinth` | Subscription Cancellation Labyrinth | Dark Patterns | High |
+| `insufficient-contrast` | Insufficient Text Contrast | Accessibility | High |
+| `swapped-buttons` | Swapped Confirm / Destructive Buttons | Feedback | Critical |
+
+These entries demonstrate the expected level of specificity for stats, descriptions, WCAG/Nielsen references, code fixes, and user stories.
+
+## Related
+
+<Columns cols={2}>
+  <Card title="Contributing overview" icon="book-open" href="/contributing/overview">
+    What makes a good entry, the quality bar, and the full contribution process.
+  </Card>
+  <Card title="Submit an antipattern" icon="file-pen" href="/contributing/submit-antipattern">
+    Step-by-step guide for writing every field and calling upsert_antipattern().
+  </Card>
+</Columns>

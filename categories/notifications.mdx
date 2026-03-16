@@ -1,0 +1,147 @@
+---
+title: "Notification Spam"
+description: "Newsletter popups at 0.3 s after load, geolocation requests with zero context, and notification fatigue loops — documented antipatterns from the Notification Spam category."
+keywords: ["notification spam", "popup antipatterns", "permission requests", "push notifications", "notification fatigue", "UX"]
+---
+
+Notification spam antipatterns occur when products interrupt users with permission requests, popups, or alerts before the user has established any reason to consent. The result is reflexive denial of permissions, banner blindness, and the erosion of the user's trust that the product will respect their attention.
+
+## What this category covers
+
+Notification antipatterns concentrate around three failure modes:
+
+1. **Pre-engagement requests** — asking for permissions (push notifications, geolocation, camera) before the user has any context for why they are needed
+2. **Interrupt-first design** — showing modals, popups, and overlays in the first seconds of a session before the user has done anything
+3. **Notification fatigue loops** — high-volume, low-value notifications that train users to ignore or block all product notifications
+
+## Documented antipatterns
+
+### Newsletter popup at 0.3 seconds
+
+A newsletter subscription modal appears 300 milliseconds after the page loads — before the user has read a single word of the content they came for. The modal blocks the content. The only way to access the content is to subscribe or dismiss the modal.
+
+**Why it fails:** The user has given zero signal that they want to subscribe to a newsletter. They have not read any content. There is no established value proposition. The prompt is purely interruptive. According to Nielsen's Heuristic #3 (User control and freedom), users need to feel in control of their own navigation — an immediate interrupt removes that control before the session has begun.
+
+**The fix:**
+
+```tsx
+// Never show a subscription modal before engagement is established
+// Trigger on: scroll depth > 70%, time on page > 60s, or exit intent
+const [showModal, setShowModal] = useState(false);
+
+useEffect(() => {
+  const handleScroll = () => {
+    const scrollDepth = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+    if (scrollDepth > 0.7) setShowModal(true);
+  };
+
+  window.addEventListener("scroll", handleScroll, { passive: true });
+  return () => window.removeEventListener("scroll", handleScroll);
+}, []);
+```
+
+### Geolocation request with zero context
+
+The browser geolocation permission dialog fires on page load with no prior explanation of why location is needed. Users see the browser's generic prompt: "[Site] wants to know your location." Without context, most users deny the request — permanently.
+
+**Why it fails:** Browser permission prompts, once denied, are difficult to reinstate. A user who denies geolocation on first load — because no context was provided — cannot benefit from location features unless they manually change browser settings (which most users do not know how to do).
+
+**The fix:** Show a custom in-app prompt that explains the value of sharing location *before* triggering the browser prompt. Only trigger the browser's native permission dialog after the user agrees to the custom prompt.
+
+```tsx
+function LocationPrompt({ onAccept, onDecline }: Props) {
+  return (
+    <div role="dialog" aria-labelledby="location-title">
+      <h2 id="location-title">Find stores near you</h2>
+      <p>
+        Share your location to see store availability and
+        estimated delivery times in your area.
+      </p>
+      <button onClick={onAccept}>Allow location access</button>
+      <button onClick={onDecline}>No thanks, I'll enter my address</button>
+    </div>
+  );
+}
+
+const handleAccept = async () => {
+  dismissCustomPrompt();
+  // Only request browser permission after user agreed to custom prompt
+  const position = await navigator.geolocation.getCurrentPosition(...);
+};
+```
+
+### Push notification request on first visit
+
+The browser push notification permission dialog fires on the homepage, before the user has logged in, before they have viewed any content, and before they have any basis for evaluating whether they want notifications from this product.
+
+**Why it fails:** Push notification permission acceptance rates are 2–5% when asked immediately on first visit, versus 15–30% when asked after the user has completed a meaningful action (placed an order, saved an item, sent a message). Asking too early wastes the one opportunity to request this permission.
+
+**The fix:** Trigger push notification prompts only at moments of high intent — after a transaction completes, after the user sets up alerts, or after an action where real-time updates have obvious value.
+
+## Notification fatigue loops
+
+Productivity tools, social platforms, and e-commerce sites commonly send high volumes of low-relevance notifications. Users receive so many that they either disable all notifications (preventing important alerts from landing) or ignore all notifications (defeating the purpose of the channel).
+
+**Symptoms:**
+- Email notifications for every action by every user in a shared workspace
+- Weekly "digest" emails that contain nothing actionable
+- Push notifications for marketing content
+- Badge counts that cannot be cleared without opening each individual notification
+
+**The fix:** Give users granular notification preferences. Categorize notifications by urgency and relevance. Default to minimum necessary notifications and let users opt into more.
+
+## Why these patterns are harmful
+
+| Effect | Evidence |
+|---|---|
+| Permission denial | Immediate push notification requests have 2–5% acceptance vs. 15–30% with appropriate timing |
+| Banner blindness | Users who are interrupted frequently learn to dismiss all overlays without reading them |
+| Trust erosion | Interrupt-first design is consistently cited as a primary trust-reducing signal in first-impression research |
+| SEO impact | Google's Page Experience signals penalize pages with intrusive interstitials that block content on mobile |
+
+## WCAG criteria violated
+
+| Criterion | Level | Description |
+|---|---|---|
+| **2.2.2** Pause, Stop, Hide | A | Moving or auto-updating content must be pausable or stoppable |
+| **2.2.4** Interruptions | AAA | Users must be able to postpone or suppress interruptions |
+| **3.2.1** On Focus | A | Receiving focus must not trigger unexpected context changes |
+
+## Nielsen heuristics violated
+
+- **#3 — User control and freedom:** Users need to feel in control of when and how they are interrupted.
+- **#1 — Visibility of system status:** Notification systems must communicate what is being notified and why, not just that a notification exists.
+- **#8 — Aesthetic and minimalist design:** Every notification that is not essential is noise that degrades the value of essential notifications.
+
+## How to identify these patterns
+
+<AccordionGroup>
+  <Accordion title="First-load interrupt audit">
+    Open your product in an incognito window. Note every modal, popup, overlay, or browser permission dialog that appears before you have interacted with any content. Any interrupt in the first 5 seconds should be questioned.
+  </Accordion>
+  <Accordion title="Permission request timing audit">
+    Map every browser permission request (location, notifications, camera, microphone) to the user action that triggers it. If any triggers on page load, move it to a contextually appropriate trigger point.
+  </Accordion>
+  <Accordion title="Notification volume audit">
+    Subscribe to all notification channels for your product and use it normally for one week. Count how many notifications you receive. Count how many were actionable. The ratio should be close to 1:1.
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+  Google's Helpful Content and Page Experience signals actively penalize pages that show intrusive interstitials to mobile users. A newsletter popup that fires at 0.3 s on mobile is a simultaneous UX failure and an SEO defect.
+</Warning>
+
+<Tip>
+  The best time to ask for push notifications is immediately after the user completes an action that makes real-time updates valuable — for example, after placing an order. At that moment, the value proposition ("Get notified when your order ships") is obvious and timely.
+</Tip>
+
+## Browse the notifications library
+
+<CardGroup cols={2}>
+  <Card title="View all Notification antipatterns" icon="book" href="https://badui.dev/library?category=notifications">
+    Filter the full catalog to the Notification Spam category
+  </Card>
+  <Card title="Back to all categories" icon="grid-2" href="/categories/overview">
+    Return to the category overview
+  </Card>
+</CardGroup>

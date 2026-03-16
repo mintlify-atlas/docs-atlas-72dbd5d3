@@ -1,0 +1,126 @@
+---
+title: "Registration"
+description: "How to create a free account on badui.dev and what happens when you do."
+keywords: ["register", "sign up", "account", "supabase", "email verification"]
+---
+
+## Creating an account
+
+Anyone can register for a free account on badui.dev. An account lets you submit antipatterns, track your contributions, and appear as a named contributor in the catalog.
+
+Navigate to [badui.dev/register](https://badui.dev/register) or click **Register** in the top-right corner of any page.
+
+<Steps>
+  <Step title="Enter your email">
+    Type your email address into the **Email** field. This becomes your login credential and the address where your confirmation link is sent.
+  </Step>
+  <Step title="Choose a password">
+    Enter a password in the **Password** field. Passwords must be at least 8 characters long.
+  </Step>
+  <Step title="Submit the form">
+    Click **Create account**. The form submits via a Next.js Server Action to `supabase.auth.signUp`.
+  </Step>
+  <Step title="Check your email">
+    After a successful submission you are redirected back to `/register` with a success banner: **Check your email for a confirmation link.** Open that email and click the link to verify your address.
+  </Step>
+  <Step title="Email confirmation">
+    Clicking the link in the email takes you to `/auth/callback?code=…`, which exchanges the one-time code for a session and redirects you to the homepage.
+  </Step>
+</Steps>
+
+<Note>
+  The registration form only collects your email and password. All other profile fields — username, display name, bio, avatar URL, and website — are filled in separately from your [profile settings](/accounts/profile).
+</Note>
+
+## What information is collected
+
+At registration, Supabase Auth records your email address and hashed password. No profile data is required at sign-up.
+
+Once you confirm your email, a database trigger automatically creates a row in the `profiles` table with the following columns available for you to fill in:
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | `uuid` | Primary key — matches your `auth.users` ID |
+| `username` | `text` (unique) | Your public handle on badui.dev |
+| `display_name` | `text` | The name shown next to your contributions |
+| `avatar_url` | `text` | URL to your profile picture |
+| `bio` | `text` | A short description visible on your public profile |
+| `website` | `text` | A personal or professional URL |
+| `updated_at` | `timestamptz` | Timestamp of the last profile update |
+
+## Supabase Auth integration
+
+Registration is handled by the `register` Server Action in `lib/supabase/actions.ts`:
+
+```typescript lib/supabase/actions.ts
+export async function register(formData: FormData) {
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signUp({
+    email:    formData.get("email") as string,
+    password: formData.get("password") as string,
+    options:  { emailRedirectTo: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/callback` },
+  });
+  if (error) redirect(`/register?error=${encodeURIComponent(error.message)}`);
+  revalidatePath("/", "layout");
+  redirect("/register?success=1");
+}
+```
+
+The `emailRedirectTo` option tells Supabase where to send the user after they click the confirmation link — the `/auth/callback` route, which completes the session exchange.
+
+## Automatic profile creation
+
+When Supabase creates a new user in `auth.users`, a PostgreSQL trigger fires immediately:
+
+```sql
+create or replace trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+```
+
+The trigger calls `handle_new_user()`, which inserts a row into `public.profiles`:
+
+```sql
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, display_name, username, avatar_url)
+  values (
+    new.id,
+    new.raw_user_meta_data->>'display_name',
+    new.raw_user_meta_data->>'username',
+    new.raw_user_meta_data->>'avatar_url'
+  );
+  return new;
+end;
+$$ language plpgsql security definer;
+```
+
+Because the registration form does not pass `display_name`, `username`, or `avatar_url` as metadata, all three columns are `NULL` initially. You set them later in [profile settings](/accounts/profile).
+
+<Tip>
+  You can fill in your username and display name immediately after confirming your email. Head to **Profile** in the top-right dropdown menu.
+</Tip>
+
+## Error handling
+
+If Supabase returns an error (for example, the email is already registered), the Server Action redirects back to `/register?error=…` and the error message is decoded and displayed in an alert banner above the form.
+
+Common errors:
+
+| Error | Cause |
+|---|---|
+| `User already registered` | An account with that email already exists. Sign in instead. |
+| `Password should be at least 6 characters` | Supabase enforces a minimum length; the form requires 8. |
+| `Unable to validate email address: invalid format` | The email address is malformed. |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Sign in" icon="arrow-right-to-bracket" href="/accounts/login">
+    Log in to your new account
+  </Card>
+  <Card title="Set up your profile" icon="user" href="/accounts/profile">
+    Add a username, bio, and website to your profile
+  </Card>
+</CardGroup>

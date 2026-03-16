@@ -1,0 +1,112 @@
+---
+title: "Navigation"
+description: "Hamburger menus hiding 90% of the app, scroll hijacking, broken breadcrumbs, and infinite-scroll footer traps — documented antipatterns from the Navigation category."
+keywords: ["navigation antipatterns", "hamburger menu", "scroll hijacking", "infinite scroll", "breadcrumbs", "UX navigation"]
+---
+
+Navigation antipatterns disrupt the user's mental model of where they are and where they can go. When navigation is broken or obscured, users cannot orient themselves, cannot backtrack gracefully, and cannot find what they came for.
+
+## What this category covers
+
+Navigation antipatterns concentrate around three failure modes:
+
+1. **Concealed structure** — hiding the majority of the site behind a single menu or gesture
+2. **Hijacked motion** — overriding native scroll behavior to serve decorative purposes
+3. **Unreachable destinations** — footers, pagination controls, or secondary content that dynamic loading makes inaccessible
+
+## Documented antipatterns
+
+### Infinite scroll footer trap — Medium impact
+
+The footer is unreachable: every time the user approaches the bottom of the page, 20 new items load above it. The footer — which typically contains legal links, accessibility statements, contact details, and secondary navigation — is permanently inaccessible through normal scrolling.
+
+**Why it fails:** Infinite scroll without a reachable end state violates Nielsen's #3 (User control and freedom) by removing the user's ability to reach a known destination. It also violates the expectation set by every other website the user has visited, making the page feel broken.
+
+**The fix:** Add a sticky footer, a "Load more" button instead of automatic loading, or a fixed bottom navigation bar that remains accessible regardless of scroll position.
+
+```tsx
+// Replace auto-loading with an explicit control
+<button
+  onClick={loadMore}
+  className="w-full py-3 border-2 border-current font-bold"
+  aria-label="Load 20 more results"
+>
+  Load more
+</button>
+
+// Always render the footer outside the infinite-scroll container
+<footer aria-label="Site footer">
+  {/* footer content */}
+</footer>
+```
+
+### Scroll hijacking hero — High impact
+
+Scrolling the mouse wheel moves a lateral carousel instead of the page. Users attempt to scroll down the page and are instead transported sideways through a marketing carousel. The mechanism has no visual affordance and no escape hatch. Average time to abandon: 4 seconds.
+
+**Why it fails:** Overriding scroll direction breaks a deeply ingrained physical expectation. Users cannot trust their input device. Nielsen's #1 (Visibility of system status) is violated because the user receives no indication that their scroll action will produce a non-standard result.
+
+**The fix:** Never hijack vertical scroll for horizontal content. Use explicit arrow controls, dots, or swipe gestures for carousels. Respect native scroll direction.
+
+### Hamburger menus obscuring navigation structure
+
+Collapsing the entire primary navigation behind a hamburger icon on desktop and tablet viewports hides 90%+ of the application's navigation from casual discovery. Studies consistently show that navigation items behind a hamburger icon receive significantly less traffic than items exposed in a persistent nav bar.
+
+**The fix:** Reserve hamburger menus for mobile viewports where screen real estate is genuinely constrained. On tablet and desktop, use persistent horizontal nav or a visible sidebar.
+
+## Why these patterns are harmful
+
+| Effect | Evidence |
+|---|---|
+| Disorientation | Users who cannot navigate reliably develop lower confidence in the product overall |
+| Reduced feature discovery | Navigation items hidden behind a hamburger receive 3–5× less traffic than exposed items |
+| Footer inaccessibility | Infinite scroll traps violate WCAG 2.1 Success Criterion 2.1.1 (Keyboard) when footer links are unreachable by keyboard |
+| Immediate abandonment | Scroll hijacking produces abandonment within 4 seconds in usability testing |
+
+## WCAG criteria violated
+
+| Criterion | Level | Description |
+|---|---|---|
+| **2.1.1** Keyboard | A | All functionality must be operable via keyboard |
+| **2.4.1** Bypass Blocks | A | Mechanism to skip repeated navigation blocks |
+| **2.4.5** Multiple Ways | AA | More than one way to find a page |
+| **2.4.8** Location | AA | Users must be able to determine where they are in the site |
+
+## Nielsen heuristics violated
+
+- **#1 — Visibility of system status:** Users need to know where they are, what's happening, and what's available.
+- **#3 — User control and freedom:** Users need clear undo and exit paths, and must be able to reach any destination by conventional means.
+- **#6 — Recognition rather than recall:** Navigation options should be visible, not hidden behind gestures or icons.
+
+## How to identify these patterns
+
+<AccordionGroup>
+  <Accordion title="Audit checklist for navigation">
+    - Attempt to reach the footer on every page that uses infinite scroll or lazy loading. Is it reachable?
+    - Check primary navigation on every breakpoint. What percentage of nav items are visible without interaction at 1024 px?
+    - Try scrolling every page with the keyboard arrow keys. Does anything unexpected happen?
+    - Verify that breadcrumbs reflect the actual current location and are not stale or missing.
+  </Accordion>
+  <Accordion title="Testing scroll behavior">
+    Use browser DevTools device emulation to test scroll behavior across breakpoints. Pay particular attention to hero sections and any component that overrides `overflow`, `touch-action`, or wheel event handlers.
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+  Scroll hijacking is one of the fastest-abandonment triggers in UX research. If your codebase has `wheel` event listeners or `overflow: hidden` on `<body>`, audit them carefully.
+</Warning>
+
+<Tip>
+  Test navigation with a keyboard only. If you cannot reach every linked destination using only Tab, Shift+Tab, Enter, and arrow keys, your navigation has an accessibility failure.
+</Tip>
+
+## Browse the navigation library
+
+<CardGroup cols={2}>
+  <Card title="View all Navigation antipatterns" icon="book" href="https://badui.dev/library?category=navigation">
+    Filter the full catalog to the Navigation category
+  </Card>
+  <Card title="Back to all categories" icon="grid-2" href="/categories/overview">
+    Return to the category overview
+  </Card>
+</CardGroup>

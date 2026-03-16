@@ -1,0 +1,84 @@
+---
+title: "Introduction"
+description: "The UI Antipattern Library — a research-backed catalog of bad UX patterns and how to fix them."
+---
+
+## What is Bad UI?
+
+Bad UI is a curated, research-backed catalog of UI antipatterns — the recurring design and accessibility failures that cost products real users, real revenue, and real trust.
+
+Every pattern in the library is documented with:
+
+- **What went wrong** — a clear description of the broken pattern and its observable behavior
+- **Why it fails** — the cognitive, accessibility, or design principle being violated
+- **Business impact** — quantified conversion damage, abandonment rates, and support costs
+- **Standards mapping** — WCAG 2.1/2.2 success criteria and Nielsen's 10 usability heuristics
+- **The fix** — production-ready React/Tailwind CSS code you can drop into your codebase
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Start browsing the antipattern library in under a minute
+  </Card>
+  <Card title="Antipattern Library" icon="book" href="/features/antipattern-library">
+    Search and filter 120+ documented patterns
+  </Card>
+  <Card title="Browse by Category" icon="grid-2" href="/categories/overview">
+    12 structured categories from Forms to Dark Patterns
+  </Card>
+  <Card title="Contribute" icon="code-pull-request" href="/contributing/overview">
+    Submit a pattern or improve an existing entry
+  </Card>
+</CardGroup>
+
+## Why this exists
+
+Most teams know their UI has problems. The hard part is communicating *why* those problems matter — to stakeholders, to engineers who built them, and to designers who approved them.
+
+Bad UI provides the evidence layer: real statistics, accessibility standards citations, and conversion impact data that transform vague complaints into defensible, actionable engineering priorities.
+
+## What's in the catalog
+
+<CardGroup cols={3}>
+  <Card title="120+ Patterns" icon="list">
+    Documented antipatterns across all major UX domains
+  </Card>
+  <Card title="12 Categories" icon="shapes">
+    From Forms and Navigation to Dark Patterns and Micro-UX
+  </Card>
+  <Card title="4 Impact Levels" icon="triangle-exclamation">
+    Critical, High, Medium, and Low severity ratings
+  </Card>
+  <Card title="WCAG References" icon="universal-access">
+    WCAG 2.1 and 2.2 success criteria cited per pattern
+  </Card>
+  <Card title="Nielsen Heuristics" icon="magnifying-glass">
+    Nielsen's 10 usability heuristics mapped to each issue
+  </Card>
+  <Card title="Code Fixes" icon="wrench">
+    React and Tailwind CSS solutions ready to copy
+  </Card>
+</CardGroup>
+
+## Impact severity levels
+
+Each antipattern is assigned one of four impact levels based on observed user abandonment, error rates, and accessibility failure severity:
+
+| Level | Description |
+|-------|-------------|
+| **Critical** | Severe usability roadblock. High risk of immediate abandonment. |
+| **High** | Major friction point. Significantly degrades user satisfaction. |
+| **Medium** | Consistent annoyance. Slows down users and erodes trust. |
+| **Low** | Minor polish issue. Mostly aesthetic or edge-case friction. |
+
+## Tech stack
+
+Bad UI is built with Next.js 16, React 19, Tailwind CSS 4, and Supabase. The antipattern database is a PostgreSQL table with row-level security, served through Supabase's JavaScript client.
+
+<CardGroup cols={2}>
+  <Card title="Development Setup" icon="laptop" href="/development/setup">
+    Run the project locally
+  </Card>
+  <Card title="Database Schema" icon="database" href="/development/database">
+    Explore the antipatterns table structure
+  </Card>
+</CardGroup>

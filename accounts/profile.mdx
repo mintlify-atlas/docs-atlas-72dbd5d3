@@ -1,0 +1,157 @@
+---
+title: "Profile"
+description: "Manage your public profile on badui.dev — username, display name, bio, avatar, and website."
+keywords: ["profile", "username", "display name", "bio", "avatar", "row level security"]
+---
+
+## Overview
+
+Every badui.dev account has a public profile stored in the `profiles` table. Other members of the community can view your profile and see which antipatterns you have submitted. You control all the information that appears there.
+
+To open your profile settings, click your avatar in the top-right corner of any page and select **Profile**, or navigate directly to [badui.dev/profile](https://badui.dev/profile).
+
+<Warning>
+  The `/profile` page requires authentication. If you are not signed in, you are redirected to `/login` automatically.
+</Warning>
+
+## Profile fields
+
+The `profiles` table contains the following user-editable columns:
+
+| Field | Column | Notes |
+|---|---|---|
+| Display name | `display_name` | The name shown next to your contributions in the catalog |
+| Username | `username` | Unique handle; used to identify you across the site |
+| Bio | `bio` | Free-text description visible on your public profile |
+| Website | `website` | A URL, validated as `type="url"` in the form |
+| Avatar URL | `avatar_url` | URL to a hosted profile image |
+
+Two additional columns are managed automatically:
+
+| Column | Set by |
+|---|---|
+| `id` | Supabase Auth — matches your `auth.users` UUID |
+| `updated_at` | The `ProfileForm` component — written as `new Date().toISOString()` on every save |
+
+<Note>
+  `avatar_url` is stored in the database but is not currently editable through the profile form UI. It can be set programmatically or via a future upload feature.
+</Note>
+
+## Updating your profile
+
+The profile page is a Next.js Server Component (`app/profile/page.tsx`) that fetches your current profile row from Supabase and passes it as a prop to the `ProfileForm` client component.
+
+<Steps>
+  <Step title="Open profile settings">
+    Click your avatar in the navbar and select **Profile**. The page loads your current `display_name`, `username`, `bio`, and `website` pre-filled into the form.
+  </Step>
+  <Step title="Edit the fields">
+    Update any combination of the four editable fields:
+    - **Display Name** — how your name appears publicly
+    - **Username** — your unique handle (must be unique across all accounts)
+    - **Website** — accepts a full URL including protocol (e.g. `https://example.com`)
+    - **Biography** — free-form text, rendered in a four-row textarea
+  </Step>
+  <Step title="Save changes">
+    Click **Save Changes**. The `ProfileForm` component calls `supabase.from("profiles").update(…).eq("id", profile.id)` directly from the browser using the Supabase browser client.
+  </Step>
+  <Step title="Confirm success">
+    On a successful save, a **Profile updated successfully!** confirmation message appears inline next to the button. If the update fails, an error message is shown in its place.
+  </Step>
+</Steps>
+
+The `updateProfile` function inside `ProfileForm.tsx`:
+
+```typescript components/profile/ProfileForm.tsx
+async function updateProfile() {
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      display_name: displayName,
+      username,
+      bio,
+      website,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", profile.id);
+
+  if (error) throw error;
+  setSuccess(true);
+}
+```
+
+## Row-level security
+
+The `profiles` table has row-level security (RLS) enabled. Three policies govern access:
+
+### Public read
+
+```sql
+create policy "Public profiles are viewable by everyone."
+  on profiles for select using (true);
+```
+
+All profile rows are readable by anyone, including unauthenticated visitors. This is intentional — contributor profiles are public information.
+
+### Insert (own profile only)
+
+```sql
+create policy "Users can insert their own profile."
+  on profiles for insert with check (auth.uid() = id);
+```
+
+A user can only insert a row where `id` matches their own `auth.uid()`. In practice, the `handle_new_user` trigger (which runs as `security definer`) handles the initial insert, so users never call insert directly.
+
+### Update (own profile only)
+
+```sql
+create policy "Users can update their own profile."
+  on profiles for update using (auth.uid() = id);
+```
+
+The `.eq("id", profile.id)` filter in `ProfileForm` is reinforced at the database level: even if the filter were omitted or tampered with on the client, Supabase would reject any update attempt where `auth.uid()` does not match the row's `id`.
+
+<Tip>
+  Because the select policy uses `true`, you can query any profile by ID without authentication. This is how public contributor pages will work when that feature is built out.
+</Tip>
+
+## How the page loads
+
+The profile page server component (`app/profile/page.tsx`) performs two sequential Supabase queries before rendering:
+
+```typescript app/profile/page.tsx
+const supabase = await createClient();
+const { data: { user } } = await supabase.auth.getUser();
+
+if (!user) redirect("/login");
+
+const { data: profile } = await supabase
+  .from("profiles")
+  .select("*")
+  .eq("id", user.id)
+  .single();
+```
+
+1. `auth.getUser()` verifies the session. If there is no valid session, the user is redirected to `/login`.
+2. A `SELECT *` on `profiles` filtered by the authenticated user's ID loads the existing profile data.
+
+The `display_name` shown in the dashboard header falls back to the email prefix if no display name has been set:
+
+```typescript
+const displayName = profile?.display_name || user.email?.split("@")[0] || "User";
+```
+
+## Signing out
+
+A **Sign out** button appears at the bottom of the left sidebar on the profile page. It submits a form to the `logout` Server Action, which calls `supabase.auth.signOut()`, invalidates the session, revalidates the layout cache, and redirects to `/`.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Registration" icon="user-plus" href="/accounts/registration">
+    Learn how accounts are created and the profile trigger fires
+  </Card>
+  <Card title="Login" icon="arrow-right-to-bracket" href="/accounts/login">
+    Understand session management and middleware
+  </Card>
+</CardGroup>

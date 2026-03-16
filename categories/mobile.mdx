@@ -1,0 +1,141 @@
+---
+title: "Responsive & Mobile"
+description: "8 px tap targets, horizontal overflow, 9 px fonts on small screens — documented antipatterns from the Responsive & Mobile category."
+keywords: ["mobile antipatterns", "responsive design", "tap target", "mobile UX", "touch accessibility", "viewport"]
+---
+
+Responsive and mobile antipatterns occur when interfaces designed primarily for desktop are adapted for small screens without reconsidering the interaction model. The result is a UI that technically renders on mobile but fails in practice: targets too small to tap accurately, text too small to read, layouts that overflow the viewport, and input methods that fight the device.
+
+## What this category covers
+
+Mobile antipatterns concentrate around four failure modes:
+
+1. **Touch target sizing** — interactive elements too small for accurate finger interaction
+2. **Typography scaling** — font sizes that become illegible on small viewports
+3. **Viewport overflow** — content or layouts that extend beyond the screen width
+4. **Input hostility** — form inputs that trigger the wrong keyboard, disable zoom, or require precise mouse-like interaction
+
+## Documented antipatterns
+
+### Undersized tap targets
+
+Apple's Human Interface Guidelines recommend a minimum touch target of 44×44 points. Google's Material Design specifies 48×48 dp. Targets below 24×24 px — common in icon buttons, checkbox labels, and inline text links — produce high error rates and user frustration on touch devices.
+
+**Why it fails:** Human finger contact points average 10–14 mm in diameter. An 8 px icon button requires sub-millimeter precision. Users miss targets, accidentally activate adjacent elements, and must retry repeatedly.
+
+**The fix:**
+
+```tsx
+// Use min touch target sizing regardless of visual size
+<button
+  className="min-w-[44px] min-h-[44px] flex items-center justify-center"
+  aria-label="Delete item"
+>
+  <Trash2 className="size-4" />
+</button>
+```
+
+For elements where the visual size must remain small (e.g., a 16px icon in a dense table), extend the interactive area using padding or a pseudo-element without affecting layout.
+
+### 9 px fonts on small screens
+
+Font sizes below 16 px cause iOS Safari to zoom in automatically on form inputs. Font sizes below 12 px are broadly illegible in any context. Despite this, many desktop-first designs use 10–11 px for captions, metadata, and secondary labels — sizes that transfer unchanged to mobile.
+
+**The fix:**
+
+```css
+/* Set a minimum font size for body content */
+body {
+  font-size: clamp(1rem, 2.5vw, 1.125rem);
+}
+
+/* Prevent iOS zoom on form inputs */
+input, select, textarea {
+  font-size: 16px; /* Never go below 16px on inputs */
+}
+```
+
+### Horizontal overflow and uncontained elements
+
+A single element wider than the viewport width creates horizontal scrolling on the entire page. Common culprits: wide `<pre>` blocks, fixed-width containers, images without `max-width: 100%`, and tables.
+
+```css
+/* Global safeguard */
+* {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+img, video {
+  max-width: 100%;
+  height: auto;
+}
+
+pre, code {
+  overflow-x: auto;
+  white-space: pre;
+}
+```
+
+### Disabling viewport zoom
+
+`<meta name="viewport" content="user-scalable=no">` or `maximum-scale=1` prevents users from zooming. This directly violates WCAG 1.4.4 (Resize Text) and is used as a workaround for layouts that break at zoom — which means the real problem is the layout, not the zoom.
+
+**Never disable user zoom.** Fix the layout.
+
+## Why these patterns are harmful
+
+| Effect | Evidence |
+|---|---|
+| High mobile abandonment | Tap target failures are the #1 cited reason for mobile form abandonment in Baymard research |
+| WCAG violations | Disabled zoom fails WCAG 1.4.4 (AA); small text can fail 1.4.3 depending on context |
+| iOS input zoom | Sub-16 px font sizes on inputs trigger automatic zoom in Safari, disrupting page layout |
+| Reachability | 8 px tap targets produce 3–5× higher error rates in touch interaction studies |
+
+## WCAG criteria violated
+
+| Criterion | Level | Description |
+|---|---|---|
+| **1.4.4** Resize Text | AA | Text must be resizable to 200% without loss of content or functionality |
+| **1.4.10** Reflow | AA | Content must reflow at 320 CSS px without horizontal scrolling |
+| **2.5.5** Target Size (Minimum) | AA (WCAG 2.2) | Touch targets must be at least 24×24 CSS px |
+| **2.5.8** Target Size (Enhanced) | AA (WCAG 2.2) | Touch targets must be at least 44×44 CSS px |
+
+## Nielsen heuristics violated
+
+- **#1 — Visibility of system status:** When tap targets are too small, users can't tell if their tap registered.
+- **#4 — Consistency and standards:** Users expect mobile interfaces to follow platform conventions for target sizing.
+- **#10 — Help and documentation:** When interactions fail silently due to missed targets, users have no recourse.
+
+## How to identify these patterns
+
+<AccordionGroup>
+  <Accordion title="Tap target audit">
+    Open Chrome DevTools, enable device emulation, and run a Lighthouse accessibility audit. The audit flags touch targets below the minimum threshold. Alternatively, use the Coverage panel to visually inspect tap target sizes.
+  </Accordion>
+  <Accordion title="Overflow detection">
+    Add `* { outline: 1px solid red }` to your stylesheet temporarily. Any element that visually exceeds the viewport width on mobile is causing overflow. Alternatively, check for `overflow-x: auto` on `<body>` or `<html>` — if it's there, something is causing overflow.
+  </Accordion>
+  <Accordion title="Font size verification">
+    In DevTools device emulation, set the viewport to 375 px (iPhone SE) and inspect all text elements. Flag any computed font size below 12 px and any input with font-size below 16 px.
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+  If your codebase contains `user-scalable=no` or `maximum-scale=1` in any viewport meta tag, remove it immediately. This is a WCAG AA violation and it makes your interface inaccessible to users who rely on zoom.
+</Warning>
+
+<Tip>
+  The fastest mobile audit: open your site on a real phone, not just DevTools emulation. Emulation does not replicate real finger accuracy, real font rendering, or real network conditions.
+</Tip>
+
+## Browse the mobile library
+
+<CardGroup cols={2}>
+  <Card title="View all Mobile antipatterns" icon="book" href="https://badui.dev/library?category=mobile">
+    Filter the full catalog to the Responsive & Mobile category
+  </Card>
+  <Card title="Back to all categories" icon="grid-2" href="/categories/overview">
+    Return to the category overview
+  </Card>
+</CardGroup>

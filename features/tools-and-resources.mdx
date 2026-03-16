@@ -1,0 +1,104 @@
+---
+title: "Tools and resources"
+description: "A hand-picked collection of free tools and research resources for finding, documenting, and fixing UI antipatterns."
+keywords: ["tools", "accessibility", "contrast checker", "axe", "WAVE", "Lighthouse", "WCAG", "Nielsen", "Baymard"]
+---
+
+The **Build Better. Test Better.** section of the homepage curates 9 free tools used by the Bad UI editors to find and document antipatterns. They span automated accessibility testing, manual colour contrast checking, official standards references, and UX research databases.
+
+<Note>
+  All tools listed here are free to use. Some (axe DevTools, Lighthouse) are built into the browser with no installation required.
+</Note>
+
+## Accessibility testing
+
+<CardGroup cols={2}>
+  <Card title="WebAIM Contrast Checker" icon="eye" href="https://webaim.org/resources/contrastchecker/">
+    Check foreground/background colour contrast against WCAG 2.1 AA and AAA levels in real time. Enter two hex values and the tool immediately reports the ratio and pass/fail status.
+  </Card>
+  <Card title="axe DevTools" icon="bug" href="https://www.deque.com/axe/devtools/">
+    Browser extension by Deque Systems. Surfaces WCAG violations on any live page with zero configuration. Reports issue count, affected elements, and links to fix documentation.
+  </Card>
+  <Card title="WAVE Evaluation Tool" icon="wave-sine" href="https://wave.webaim.org/">
+    Visual accessibility feedback injected directly into the page under test. Overlays icons indicating errors, alerts, and structural elements — useful for quick triage without reading a report.
+  </Card>
+  <Card title="Lighthouse" icon="lighthouse" href="https://developer.chrome.com/docs/lighthouse/overview/">
+    Built into Chrome DevTools under the Audits panel. Scores accessibility, SEO, performance, and best practices in a single report. Runs against any URL including localhost.
+  </Card>
+</CardGroup>
+
+## Colour and contrast
+
+<CardGroup cols={2}>
+  <Card title="Colour & Contrast" icon="palette" href="https://colourcontrast.cc/">
+    Visualise your entire colour palette's contrast ratios simultaneously. Particularly useful when designing dark mode variants — see every combination at once rather than checking pairs individually.
+  </Card>
+  <Card title="Who Can Use" icon="users" href="https://www.whocanuse.com/">
+    Shows how people with different types of visual impairment perceive a specific colour combination. Covers cataracts, low vision, colour blindness variants, and situational impairments such as direct sunlight.
+  </Card>
+</CardGroup>
+
+## Standards references
+
+<CardGroup cols={2}>
+  <Card title="WCAG 2.1 Quick Reference" icon="book-open" href="https://www.w3.org/WAI/WCAG21/quickref/">
+    The official W3C success criteria, filterable by conformance level (A, AA, AAA) and guideline. The authoritative reference for mapping antipatterns to specific WCAG failures.
+  </Card>
+</CardGroup>
+
+## Research databases
+
+<CardGroup cols={2}>
+  <Card title="Nielsen Norman Group" icon="magnifying-glass" href="https://www.nngroup.com/">
+    The most cited UX research resource on the web. Home of Nielsen's 10 usability heuristics and thousands of peer-reviewed articles covering every area of UX — forms, navigation, mobile, e-commerce, and more.
+  </Card>
+  <Card title="Baymard Institute" icon="chart-bar" href="https://baymard.com/">
+    600+ UX guidelines backed by 245,000+ hours of e-commerce usability research. Particularly strong on checkout flows, form design, and mobile UX — all high-overlap areas with Bad UI's antipattern catalog.
+  </Card>
+</CardGroup>
+
+## Tool categories at a glance
+
+| Tool | Category | Key use case |
+|------|----------|--------------|
+| WebAIM Contrast Checker | Accessibility | Check two-colour contrast ratio |
+| axe DevTools | Automated testing | Scan a live page for WCAG violations |
+| WAVE Evaluation Tool | Accessibility | Visual overlay of accessibility issues |
+| Lighthouse | Performance + A11y | Full-page audit including accessibility score |
+| Colour & Contrast | Design | Whole-palette contrast matrix |
+| Who Can Use | Accessibility | Simulate visual impairments on a colour pair |
+| WCAG 2.1 Quick Reference | Standards | Filter and browse official success criteria |
+| Nielsen Norman Group | Research | Heuristics reference and UX research articles |
+| Baymard Institute | Research | E-commerce UX guidelines and usability data |
+
+## How these tools relate to Bad UI's scoring
+
+Bad UI's editorial team uses these tools directly in the antipattern documentation workflow:
+
+<Steps>
+  <Step title="Identify the violation">
+    Run axe DevTools or WAVE on a page exhibiting the antipattern to confirm the WCAG criterion being violated and obtain the exact criterion number for `wcag_refs`.
+  </Step>
+  <Step title="Measure the impact">
+    Use WebAIM Contrast Checker or Who Can Use to quantify contrast failures (e.g., "ratio 1.9:1 against WCAG minimum 4.5:1").
+  </Step>
+  <Step title="Map to standards">
+    Cross-reference the WCAG 2.1 Quick Reference and Nielsen Norman Group articles to populate `wcag_refs` and `nielsen_refs` on the pattern record.
+  </Step>
+  <Step title="Write the fix">
+    Verify the proposed `code_fix` resolves the violation by re-running Lighthouse after applying the change.
+  </Step>
+</Steps>
+
+<Tip>
+  For contrast issues specifically, check with **Who Can Use** in addition to a numeric ratio checker. A 4.5:1 ratio still fails for users with certain types of colour blindness depending on the hue combination.
+</Tip>
+
+<CardGroup cols={2}>
+  <Card title="Improvement guides" icon="list-check" href="/features/improvement-guides">
+    Six foundational guides mapped to WCAG and Nielsen heuristics
+  </Card>
+  <Card title="Antipattern library" icon="book" href="/features/antipattern-library">
+    Browse 120+ documented patterns with WCAG and heuristic citations
+  </Card>
+</CardGroup>

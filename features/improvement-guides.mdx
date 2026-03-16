@@ -1,0 +1,147 @@
+---
+title: "Improvement guides"
+description: "Six foundational improvement guides mapped to WCAG 2.1 success criteria and Nielsen's 10 usability heuristics — the fastest path to raising UI quality."
+keywords: ["WCAG", "Nielsen heuristics", "accessibility", "improvement", "guides", "best practices"]
+---
+
+Bad UI is not only a catalog of problems — it also provides actionable guidance for fixing them. The **How to Improve Your UI** section on the homepage features six improvement guides, each mapped to a specific WCAG 2.1 success criterion or a Nielsen usability heuristic.
+
+The full collection of best practice guides is available on this page and in the individual [category pages](/categories/overview).
+
+## Standards used in Bad UI
+
+<Tabs>
+  <Tab title="WCAG 2.1 / 2.2">
+    The **Web Content Accessibility Guidelines** (WCAG) are published by the W3C Web Accessibility Initiative. They define the international standard for accessible web content.
+
+    WCAG is organized into three conformance levels:
+
+    | Level | Meaning |
+    |-------|---------|
+    | **A** | Minimum conformance. Covers the most critical barriers. |
+    | **AA** | Mid-range. Required by most regulations and procurement policies. |
+    | **AAA** | Highest conformance. Recommended for specialist audiences. |
+
+    Each success criterion is numbered by guideline (for example, `1.4.3` means Guideline 1.4, Criterion 3 — "Contrast (Minimum)"). Bad UI cites WCAG criteria in `wcag_refs` on every antipattern that violates a specific criterion.
+
+    WCAG 2.2, published in October 2023, added new criteria including `2.5.7` (Dragging Movements) and `2.5.8` (Target Size Minimum at 24×24 CSS px).
+  </Tab>
+  <Tab title="Nielsen's 10 heuristics">
+    Jakob Nielsen's **10 Usability Heuristics for User Interface Design** are the most widely cited heuristic evaluation framework in UX. They were published by Nielsen Norman Group in 1994 and revised in 2020.
+
+    | # | Heuristic |
+    |---|----------|
+    | 1 | Visibility of system status |
+    | 2 | Match between system and the real world |
+    | 3 | User control and freedom |
+    | 4 | Consistency and standards |
+    | 5 | Error prevention |
+    | 6 | Recognition rather than recall |
+    | 7 | Flexibility and efficiency of use |
+    | 8 | Aesthetic and minimalist design |
+    | 9 | Help users recognize, diagnose, and recover from errors |
+    | 10 | Help and documentation |
+
+    Bad UI cites these as `nielsen_refs` on individual pattern pages. For example, a pattern showing a vague "Something went wrong" error violates **Heuristic #9** (help users recover from errors).
+  </Tab>
+</Tabs>
+
+## How standards map to pattern scoring
+
+Every antipattern in the Supabase database stores two reference arrays:
+
+- **`wcag_refs`** — an array of WCAG success criterion strings (e.g., `"WCAG 1.4.3 — Contrast (Minimum) AA"`)
+- **`nielsen_refs`** — an array of Nielsen heuristic references (e.g., `"Heuristic #9 — Error Recovery"`)
+
+These are displayed on the pattern's audit report page under the **02 / Justification** section, separated into an Accessibility Check panel and a Heuristic Violation panel.
+
+The `impact` field (`Critical` / `High` / `Medium` / `Low`) is assigned editorially based on a combination of observed abandonment rates, WCAG failure severity, and the number of heuristics violated.
+
+<Note>
+  A single antipattern can violate multiple WCAG criteria and multiple Nielsen heuristics simultaneously. For example, "Swapped Confirm / Destructive Buttons" violates both Nielsen #5 (Error Prevention) and Nielsen #4 (Consistency and Standards).
+</Note>
+
+## The six featured guides
+
+<AccordionGroup>
+  <Accordion title="Ref. 01 — Colour Contrast (WCAG 1.4.3)">
+    Normal text requires a contrast ratio of at least **4.5:1** against its background. Large text (18 pt or 14 pt bold and above) requires **3:1**. Never rely solely on colour to convey meaning.
+
+    **Checklist:**
+    - Use `oklch()` or HSL for predictable lightness when building colour systems
+    - Test contrast with the browser DevTools colour picker before shipping
+    - Add a secondary cue (icon, pattern, or label) alongside any colour-only state
+
+    See also: [WebAIM Contrast Checker](/features/tools-and-resources), [Who Can Use](/features/tools-and-resources)
+  </Accordion>
+
+  <Accordion title="Ref. 02 — Keyboard Navigation (WCAG 2.1.1)">
+    Every interactive element must be reachable and operable via keyboard alone. Focus must never be trapped in a component the user cannot escape without a pointing device.
+
+    **Checklist:**
+    - Add `:focus-visible` styles — never suppress the browser's outline entirely
+    - Use `tabindex="0"` on custom interactive widgets that are not native focusable elements
+    - Test with Tab, Shift+Tab, Enter, Space, and Arrow keys before shipping
+  </Accordion>
+
+  <Accordion title="Ref. 03 — Error Handling (Nielsen #9)">
+    Show errors inline, adjacent to the field or action that caused them. Be specific about what went wrong. Never blame the user. Always offer a concrete path forward.
+
+    **Checklist:**
+    - Validate on blur AND on submit — never only on submit
+    - Use `aria-describedby` to link the input field to its error message
+    - State what is wrong AND how to fix it (e.g., "Password must contain at least one number")
+  </Accordion>
+
+  <Accordion title="Ref. 04 — Touch Target Size (WCAG 2.5.5)">
+    The minimum touch target size for any interactive element on a touch device is **44 × 44 CSS px**. 48 × 48 is a safer default. WCAG 2.2 criterion 2.5.8 sets the floor at 24 × 24 px.
+
+    **Checklist:**
+    - Use padding to extend the tappable area beyond the visible element boundary
+    - Maintain a minimum 8 px gap between adjacent touch targets
+    - Test on a real device — DevTools mobile emulation underreports tap-accuracy issues
+  </Accordion>
+
+  <Accordion title="Ref. 05 — Form Labels (WCAG 1.3.1)">
+    Every input needs a persistent, visible label. Placeholder text is not a label — it disappears on focus and provides no context once a user starts typing.
+
+    **Checklist:**
+    - Use `<label for>` or `aria-labelledby` — avoid `aria-label` alone as it is invisible to sighted users
+    - Float-label patterns are acceptable but must be tested with screen readers before shipping
+    - Mark required fields with explicit text or a labelled symbol — never use colour alone
+  </Accordion>
+
+  <Accordion title="Ref. 06 — Loading States (Nielsen #1)">
+    Communicate system status at all times. Users should never have to guess whether their action was received, whether a request is in flight, or whether the page has frozen.
+
+    **Checklist:**
+    - Render a spinner or skeleton screen within **100 ms** of any user action
+    - Use `aria-live="polite"` to announce async status updates to screen reader users
+    - Persist form field values on submission errors — never reset the form to empty
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+  WCAG conformance levels A and AA are legal requirements in many jurisdictions under laws such as the European Accessibility Act (EAA, effective June 2025), the US ADA, and the UK Equality Act. Failing WCAG AA is not only a UX problem — it is a compliance risk.
+</Warning>
+
+## Using these guides in practice
+
+These six guides represent the highest-return improvements across Bad UI's full antipattern catalog. They map directly to the most frequently cited WCAG criteria and Nielsen heuristics across the 120+ documented patterns.
+
+When auditing a product, start here:
+
+1. Run the [axe DevTools](/features/tools-and-resources) browser extension to surface WCAG violations automatically.
+2. Check colour contrast with the [WebAIM Contrast Checker](/features/tools-and-resources).
+3. Tab through every interactive element on the critical user paths.
+4. Submit forms with intentional errors and verify the error messages are specific and actionable.
+5. Resize the browser to 375 px and confirm all tap targets are at least 44 × 44 px.
+
+<CardGroup cols={2}>
+  <Card title="All best practices" icon="list-check" href="/features/improvement-guides">
+    Browse all WCAG and Nielsen improvement guides
+  </Card>
+  <Card title="Tools & resources" icon="wrench" href="/features/tools-and-resources">
+    Free tools for accessibility testing and contrast checking
+  </Card>
+</CardGroup>

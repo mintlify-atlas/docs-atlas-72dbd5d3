@@ -1,0 +1,130 @@
+---
+title: 'Contributing overview'
+description: 'How to grow the Bad UI antipattern catalog with well-researched, high-quality entries.'
+keywords: ['contribute', 'antipattern', 'submission', 'catalog', 'bad ui']
+---
+
+The Bad UI catalog exists to give developers a concrete, research-backed reference for the UI mistakes that silently cost products users, conversions, and trust. Every entry documents a real failure mode with statistics, accessibility citations, and a working code fix.
+
+Contributions keep the catalog growing beyond its current 120+ documented antipatterns across 12 categories.
+
+## Why contributions matter
+
+The catalog is only as useful as it is complete. Many of the worst UI antipatterns are category-specific or platform-specific — a pattern that destroys mobile conversion may be invisible on desktop testing. Practitioners across different domains, frameworks, and user bases see failure modes that a small core team cannot.
+
+Every accepted entry:
+
+- Adds to a shared reference used by 100k+ developers
+- Is licensed under CC BY 4.0 and permanently attributed
+- Is linked from the relevant category page and the searchable library
+- Gets peer-reviewed for accuracy before publication
+
+## What makes a good antipattern entry
+
+A good entry documents a **specific, observable failure** — not a vague best practice. The difference:
+
+| Weak (not accepted) | Strong (accepted) |
+|---|---|
+| "Don't use low contrast" | "#9CA3AF text on #F3F4F6 background — ratio 1.9:1, WCAG minimum is 4.5:1" |
+| "Make modals closeable" | "White × on #E0E0E0 background — contrast ratio 1.3:1, 99% of users fail to close on first attempt" |
+| "Don't confuse users with buttons" | "Bright primary-style Cancel button next to muted Delete button — 23% accidental deletion rate" |
+
+Every entry must have:
+
+- A **specific, measurable description** of the bad pattern (exact colors, sizes, timings, or error rates where available)
+- A **clear good alternative** with the same specificity
+- At least one **WCAG 2.1/2.2 criterion** or **Nielsen heuristic** it violates
+- A **user story** in the first person (a real-sounding quote from an affected user)
+- A **business impact** statement with quantified consequences where possible
+- A **working code fix** in React with Tailwind CSS classes
+
+## The quality bar
+
+<Note>
+Entries are reviewed by the Bad UI editorial board before publication. The review checks for specificity, citation accuracy, code correctness, and tone. Vague or anecdotal submissions will be returned for revision.
+</Note>
+
+The catalog deliberately maintains a high editorial bar. It covers:
+
+- **WCAG 2.1 & 2.2 compliance analysis** — every entry maps to at least one success criterion
+- **Nielsen's 10 usability heuristics** — violations are cited by heuristic number and name
+- **Baymard Institute research** — quantitative benchmarks for forms, checkout, and navigation patterns
+- **Production-ready code fixes** — all code examples use React 19 and Tailwind CSS 4
+
+<Warning>
+Do not submit entries that duplicate existing slugs. Check the [antipattern library](https://badui.dev/library) and search by title before submitting. Duplicate slugs will be rejected at the database level by a unique constraint.
+</Warning>
+
+## Categories
+
+Submissions must be assigned to one of the 12 structured categories:
+
+<Columns cols={3}>
+  <Card title="Forms" icon="text-cursor-input">
+    Late validation, hidden labels, fields that wipe input on blur, password requirements hidden until failure.
+  </Card>
+  <Card title="Navigation" icon="navigation">
+    Hamburger menus hiding 90% of the app, broken breadcrumbs, scroll hijacking.
+  </Card>
+  <Card title="Accessibility" icon="accessibility">
+    1.9:1 contrast ratios, focus traps, missing ARIA, keyboard-hostile UX.
+  </Card>
+  <Card title="Responsive & Mobile" icon="smartphone">
+    8px tap targets, horizontal overflow, 9px fonts on small screens.
+  </Card>
+  <Card title="Feedback & States" icon="alert-circle">
+    Silent success, spinnerless loading, vague errors that disappear in 1.2s.
+  </Card>
+  <Card title="Dark Patterns" icon="ghost">
+    Roach motels, shame-confirming dialogs, hidden checkout costs, invisible close buttons.
+  </Card>
+</Columns>
+
+<Columns cols={3}>
+  <Card title="Layout & Spacing" icon="layout-grid">
+    Flat visual hierarchy, chaotic alignment, oppressive density.
+  </Card>
+  <Card title="Typography" icon="type">
+    11px body text, line-height 1.0, widows and orphans everywhere.
+  </Card>
+  <Card title="Loading & Timeouts" icon="clock">
+    Silent timeouts, no state persistence after refresh, 5-second splash screens.
+  </Card>
+  <Card title="Control Theatre" icon="eye-off">
+    Blocked paste in password fields, right-click disabled, no undo managers.
+  </Card>
+  <Card title="Notification Spam" icon="bell-ring">
+    Newsletter popup 0.3s after load. Geolocation request with zero context.
+  </Card>
+  <Card title="Broken Micro-UX" icon="mouse-pointer-2">
+    Indicatorless carousels, scroll-jumping accordions, hover traps.
+  </Card>
+</Columns>
+
+## Contribution process
+
+<Steps>
+  <Step title="Find or confirm the antipattern">
+    Search the [library](https://badui.dev/library) to confirm the pattern is not already documented. Identify the category, gather any statistics or research citations you have, and note the specific WCAG criterion or Nielsen heuristic it violates.
+  </Step>
+  <Step title="Prepare all required fields">
+    Before submitting, prepare every field described in the [data schema](/contributing/data-schema). Pay particular attention to `stat_line`, `bad_description`, `good_description`, `user_story`, and `code_fix` — these are the fields most often returned for revision.
+  </Step>
+  <Step title="Submit via the web form or SQL function">
+    Use the submission form on the site at [badui.dev/submit](https://badui.dev/submit), or call the `upsert_antipattern()` SQL function directly if you have database access. Full parameter documentation is in the [submission guide](/contributing/submit-antipattern).
+  </Step>
+  <Step title="Review and publication">
+    The editorial board reviews the entry for specificity, citation accuracy, and code correctness. Accepted entries are published with `published = true` and become visible in the catalog immediately. You will be notified by the channel you used to submit.
+  </Step>
+</Steps>
+
+## Next steps
+
+<Columns cols={2}>
+  <Card title="Submission guide" icon="file-pen" href="/contributing/submit-antipattern">
+    Step-by-step instructions for filling out every field, writing user stories, citing WCAG and Nielsen, and formatting code fixes.
+  </Card>
+  <Card title="Data schema" icon="database" href="/contributing/data-schema">
+    Full reference for the `antipatterns` table: every column, its type, constraints, and what good values look like.
+  </Card>
+</Columns>

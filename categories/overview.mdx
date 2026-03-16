@@ -1,0 +1,85 @@
+---
+title: "Antipattern categories"
+description: "12 structured categories covering every major domain where UI antipatterns concentrate — from forms and navigation to dark patterns and broken micro-UX."
+keywords: ["UI antipatterns", "UX categories", "bad UI", "usability", "WCAG", "Nielsen heuristics"]
+---
+
+The Bad UI library organizes 120+ documented antipatterns into 12 categories. Each category maps to a distinct failure domain with its own vocabulary of heuristic violations, accessibility criteria, and business consequences.
+
+<CardGroup cols={3}>
+  <Card title="Forms" icon="text-cursor-input" href="/categories/forms">
+    Late validation, hidden labels, fields that wipe input on blur.
+  </Card>
+  <Card title="Navigation" icon="compass" href="/categories/navigation">
+    Hamburger menus hiding 90% of the app, broken breadcrumbs.
+  </Card>
+  <Card title="Accessibility" icon="universal-access" href="/categories/accessibility">
+    1.9:1 contrast ratios, focus traps, missing ARIA, keyboard-hostile UX.
+  </Card>
+  <Card title="Responsive & Mobile" icon="mobile" href="/categories/mobile">
+    8 px tap targets, horizontal overflow, 9 px fonts on small screens.
+  </Card>
+  <Card title="Feedback & States" icon="circle-exclamation" href="/categories/feedback">
+    Silent success, spinnerless loading, vague 'Something went wrong' errors.
+  </Card>
+  <Card title="Layout & Spacing" icon="layout-grid" href="/categories/layout">
+    Flat visual hierarchy, chaotic alignment, oppressive density.
+  </Card>
+  <Card title="Typography" icon="font" href="/categories/typography">
+    11 px body text, line-height 1.0, widows and orphans everywhere.
+  </Card>
+  <Card title="Dark Patterns" icon="ghost" href="/categories/dark-patterns">
+    Roach motels, shame-confirming dialogs, hidden checkout costs.
+  </Card>
+  <Card title="Loading & Timeouts" icon="clock" href="/categories/loading">
+    Silent timeouts, no state persistence after refresh, 5-second splashes.
+  </Card>
+  <Card title="Control Theatre" icon="eye-off" href="/categories/control-theatre">
+    Blocked paste in password fields, right-click disabled, no managers.
+  </Card>
+  <Card title="Notification Spam" icon="bell" href="/categories/notifications">
+    Newsletter popup 0.3 s after load. Geolocation request with zero context.
+  </Card>
+  <Card title="Broken Micro-UX" icon="mouse-pointer" href="/categories/micro-ux">
+    Indicatorless carousels, scroll-jumping accordions, hover traps.
+  </Card>
+</CardGroup>
+
+## Category reference
+
+| Category | Slug | Key antipattern types |
+|---|---|---|
+| Forms | `forms` | Late validation, hidden requirements, input-clearing blur handlers, inaccessible date pickers |
+| Navigation | `navigation` | Scroll hijacking, infinite-scroll footer traps, hamburger menus, broken breadcrumbs |
+| Accessibility | `accessibility` | Insufficient contrast, missing ARIA labels, focus traps, keyboard-hostile controls |
+| Responsive & Mobile | `mobile` | Undersized tap targets, horizontal overflow, illegible font sizes, pinch-zoom disabled |
+| Feedback & States | `feedback` | Swapped button styles, ephemeral error toasts, silent success, missing loading indicators |
+| Layout & Spacing | `layout` | Flat hierarchy, misaligned elements, information overload, inconsistent whitespace |
+| Typography | `typography` | Sub-12 px body text, excessive line density, orphaned words, poor typeface pairing |
+| Dark Patterns | `dark-patterns` | Cancellation labyrinths, invisible close buttons, confirmshaming, hidden costs |
+| Loading & Timeouts | `loading` | Silent timeouts, unsaved state after refresh, unnecessary splash screens, no skeleton UI |
+| Control Theatre | `control-theatre` | Blocked paste, disabled right-click, forced app installs, no keyboard shortcuts |
+| Notification Spam | `notifications` | Immediate permission requests, pre-engagement popups, notification fatigue loops |
+| Broken Micro-UX | `micro-ux` | Indicatorless carousels, scroll-jumping accordions, hover traps, focus loss on update |
+
+## How patterns are rated
+
+Every antipattern carries one of four impact levels derived from observed abandonment rates, error rates, and accessibility failure severity.
+
+| Level | Description |
+|---|---|
+| **Critical** | Severe usability roadblock. High risk of immediate abandonment. |
+| **High** | Major friction point. Significantly degrades user satisfaction. |
+| **Medium** | Consistent annoyance. Slows down users and erodes trust. |
+| **Low** | Minor polish issue. Mostly aesthetic or edge-case friction. |
+
+## Standards coverage
+
+Patterns are cross-referenced against two authoritative frameworks:
+
+- **WCAG 2.1 / 2.2** — Web Content Accessibility Guidelines success criteria (e.g., 1.4.3 Contrast Minimum, 2.4.7 Focus Visible)
+- **Nielsen's 10 Usability Heuristics** — Jakob Nielsen's foundational heuristics (e.g., #1 Visibility of system status, #3 User control and freedom)
+
+<Tip>
+  Start with the category most relevant to your current sprint. If you're auditing a checkout flow, begin with **Forms** and **Dark Patterns**. If you're addressing an accessibility review, begin with **Accessibility** and **Typography**.
+</Tip>
